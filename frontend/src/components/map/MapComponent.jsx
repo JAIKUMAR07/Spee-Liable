@@ -110,31 +110,47 @@ const MapComponent = () => {
   const fetchDeliveries = async () => {
     try {
       setLoading(true);
-      const res = await fetch(
-        "https://delivery-tw6a.onrender.com/api/delivery/deliveries"
-      );
+      // Change this URL to match your local backend
+      const res = await fetch("http://localhost:5000/api/delivery-stops");
       if (!res.ok) throw new Error("Failed to fetch deliveries");
 
       const deliveries = await res.json();
 
       const updatedMarkers = [];
       for (const delivery of deliveries) {
-        const fullAddress = `${delivery.address}, ${delivery.pincode}`;
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
-            fullAddress
-          )}&format=json&limit=1`
-        );
-        const data = await response.json();
-        if (data.length > 0) {
+        // If location is already geocoded in your QR data, use it directly
+        if (
+          delivery.location &&
+          delivery.location.lat &&
+          delivery.location.lng
+        ) {
           updatedMarkers.push({
             _id: delivery._id,
             name: delivery.name || "Unknown",
             address: delivery.address,
             phone_num: delivery.mobile_number || "N/A",
-            pincode: delivery.pincode,
-            position: [parseFloat(data[0].lat), parseFloat(data[0].lon)],
+            pincode: delivery.pincode || "N/A",
+            position: [delivery.location.lat, delivery.location.lng],
           });
+        } else {
+          // Fallback to geocoding if no coordinates
+          const fullAddress = `${delivery.address}, ${delivery.pincode || ""}`;
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+              fullAddress
+            )}&format=json&limit=1`
+          );
+          const data = await response.json();
+          if (data.length > 0) {
+            updatedMarkers.push({
+              _id: delivery._id,
+              name: delivery.name || "Unknown",
+              address: delivery.address,
+              phone_num: delivery.mobile_number || "N/A",
+              pincode: delivery.pincode || "N/A",
+              position: [parseFloat(data[0].lat), parseFloat(data[0].lon)],
+            });
+          }
         }
       }
       setMultipleMarkers(updatedMarkers);
@@ -389,7 +405,6 @@ const MapComponent = () => {
             </div>
           )}
         </div>
-
         {/* Map */}
         <div className="rounded-lg border border-gray-300 relative">
           <MapContainer
@@ -425,37 +440,83 @@ const MapComponent = () => {
               )}
 
             {/* Delivery markers with route numbers */}
-            {multipleMarkers.map((marker, idx) => {
+            {/* Delivery markers with numbered blue icons */}
+            {/* Delivery markers with numbered blue icons - Always show numbers */}
+            {multipleMarkers.map((marker, index) => {
               const isOptimized = routeOrder.includes(marker._id);
               const orderIndex = routeOrder.indexOf(marker._id) + 1;
-              const icon = isOptimized
-                ? createNumberedIcon(orderIndex)
-                : L.divIcon({ html: "" }); // No number unless optimized
+              const displayNumber = isOptimized ? orderIndex : index + 1;
+
+              const blueNumberedIcon = new L.DivIcon({
+                className: "custom-div-icon",
+                html: `
+      <div style="position: relative; width: 30px; height: 41px;">
+        <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png" style="width: 30px; height: 41px;" />
+        <div style="
+          position: absolute; 
+          top: 3px; 
+          left: 0; 
+          width: 30px; 
+          text-align: center; 
+          color: white; 
+          font-weight: 900; 
+          font-size: 16px; 
+          text-shadow: 
+            1px 1px 3px #000000,
+            -1px -1px 3px #000000,
+            1px -1px 3px #000000,
+            -1px 1px 3px #000000,
+            0px 0px 4px #000000;
+          background: rgba(0, 0, 0, 0.4);
+          border-radius: 50%;
+          width: 22px;
+          height: 22px;
+          line-height: 22px;
+          margin-left: 4px;
+          box-shadow: 0 0 5px rgba(255, 255, 255, 0.7);
+        ">
+          ${displayNumber}
+        </div>
+      </div>`,
+                iconSize: [30, 41],
+                iconAnchor: [15, 41],
+                popupAnchor: [1, -34],
+              });
 
               return (
                 <Marker
                   key={marker._id}
                   position={marker.position}
-                  icon={icon}
-                  eventHandlers={{
-                    click: () => {
-                      // Optional: Open popup on click
-                    },
-                  }}
+                  icon={blueNumberedIcon}
                 >
                   <Popup>
-                    <div className="text-sm space-y-1 font-medium">
-                      <strong>{marker.name}</strong>
-                      <div>📍 {marker.address}</div>
-                      <div>📱 {marker.phone_num}</div>
-                      {marker.pincode && <div>📦 {marker.pincode}</div>}
-                      {isOptimized && <div>✅ Order: #{orderIndex}</div>}
+                    <div className="text-sm space-y-1 font-medium min-w-[200px]">
+                      <div className="font-semibold text-blue-800">
+                        {marker.name}
+                      </div>
+                      <div className="text-gray-600">📍 {marker.address}</div>
+                      {marker.phone_num !== "N/A" && (
+                        <div className="text-gray-600">
+                          📱 {marker.phone_num}
+                        </div>
+                      )}
+                      {marker.pincode !== "N/A" && (
+                        <div className="text-gray-600">📦 {marker.pincode}</div>
+                      )}
+                      {isOptimized ? (
+                        <div className="mt-2 p-1 bg-green-100 text-green-800 text-xs rounded text-center font-bold">
+                          ✅ Optimized Stop #{orderIndex}
+                        </div>
+                      ) : (
+                        <div className="mt-2 p-1 bg-blue-100 text-blue-800 text-xs rounded text-center">
+                          📍 Stop #{index + 1}
+                        </div>
+                      )}
                     </div>
                   </Popup>
                 </Marker>
               );
             })}
-
             {/* Show route order list below map */}
             {routeOrder.length > 0 && (
               <div className="absolute bottom-4 left-4 bg-white p-3 rounded-lg shadow-lg z-10 max-w-xs">
@@ -479,18 +540,51 @@ const MapComponent = () => {
             )}
           </MapContainer>
         </div>
-
         {/* Route Summary */}
-        {routeOrder.length > 0 && (
-          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-            <h4 className="font-semibold text-blue-800">Route Ready!</h4>
-            <p className="text-blue-700 text-sm">
-              You have {routeOrder.length} stops optimized. Use this order
-              during delivery.
+        {/* Route Summary */}
+        {routeOrder.length > 0 ? (
+          <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+            <h4 className="font-semibold text-green-800">
+              ✅ Route Optimized!
+            </h4>
+            <p className="text-green-700 text-sm">
+              You have {routeOrder.length} stops optimized for efficient
+              delivery.
             </p>
           </div>
-        )}
-
+        ) : multipleMarkers.length > 0 ? (
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <h4 className="font-semibold text-blue-800">
+              📍 Delivery Stops Ready
+            </h4>
+            <p className="text-blue-700 text-sm">
+              You have {multipleMarkers.length} stops. Click "Optimize Route" to
+              plan the best path.
+            </p>
+          </div>
+        ) : null}{" "}
+        {/* Route Summary */}
+        {routeOrder.length > 0 ? (
+          <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+            <h4 className="font-semibold text-green-800">
+              ✅ Route Optimized!
+            </h4>
+            <p className="text-green-700 text-sm">
+              You have {routeOrder.length} stops optimized for efficient
+              delivery.
+            </p>
+          </div>
+        ) : multipleMarkers.length > 0 ? (
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <h4 className="font-semibold text-blue-800">
+              📍 Delivery Stops Ready
+            </h4>
+            <p className="text-blue-700 text-sm">
+              You have {multipleMarkers.length} stops. Click "Optimize Route" to
+              plan the best path.
+            </p>
+          </div>
+        ) : null}
         {/* Delete All Button */}
         <div className="flex justify-center">
           <button
@@ -500,7 +594,6 @@ const MapComponent = () => {
             🗑️ Delete All Deliveries
           </button>
         </div>
-
         {/* Modal */}
         {showModal && (
           <div className="fixed inset-0 backdrop-blur-sm bg-white/30 flex justify-center items-center z-50">

@@ -1,12 +1,11 @@
-import React from "react";
 import Header from "./Header";
 import Footer from "./Footer";
-import QrScanner from "../qr_scanner/QrScanner";
-const Layout = () => {
+
+const Layout = ({ children }) => {
   return (
-    <div cla>
+    <div className="flex flex-col min-h-screen">
       <Header />
-      <QrScanner />
+      <div className="flex-grow">{children}</div>
       <Footer />
     </div>
   );

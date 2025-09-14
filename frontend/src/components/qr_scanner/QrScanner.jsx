@@ -2,13 +2,14 @@ import React, { useState, useEffect } from "react";
 import { Html5Qrcode, Html5QrcodeScanner } from "html5-qrcode";
 
 import axios from "axios";
+import Layout from "../layout/Layout";
 
 const API_BASE_URL = "http://localhost:5000/api";
 
 // Define structure for a delivery person
 const initialPerson = {
   name: "",
-  location: [], // [lat, lng]
+  location: { lat: 0, lng: 0 }, // { lat, lng }
   address: "",
   mobile_number: "",
   available: "",
@@ -175,100 +176,104 @@ const QrScanner = () => {
   };
 
   return (
-    <div className="flex flex-col items-center p-6 bg-gray-100 min-h-screen space-y-6">
-      <h2 className="text-3xl font-bold text-gray-800 text-center">
-        Delivery Stop Manager
-      </h2>
+    <Layout>
+      <div className="flex flex-col items-center p-6 bg-gray-100 min-h-screen space-y-6">
+        <h2 className="text-3xl font-bold text-gray-800 text-center">
+          Delivery Stop Manager
+        </h2>
 
-      {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row gap-4 mt-4">
-        <button
-          onClick={toggleScanning}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-        >
-          {scanning ? "Stop Scanning" : "Scan QR (Camera)"}
-        </button>
-
-        <label className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 cursor-pointer transition">
-          Upload QR Image
-          <input
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleImageUpload}
-          />
-        </label>
-      </div>
-
-      {/* Scanner View */}
-      {scanning && <div id={regionId} className="mt-4" />}
-      <div id="upload-region" style={{ display: "none" }} />
-
-      {/* Manual Input Form */}
-      <div className="w-full max-w-md bg-white shadow-md rounded-lg p-5">
-        <h3 className="text-lg font-semibold mb-3">Add Manually</h3>
-        <div className="space-y-3">
-          <input
-            type="text"
-            placeholder="Enter Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full border p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <input
-            type="text"
-            placeholder="Enter Address"
-            value={manualAddress}
-            onChange={(e) => setManualAddress(e.target.value)}
-            className="w-full border p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 mt-4">
           <button
-            onClick={addManually}
-            className="w-full bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700 transition"
+            onClick={toggleScanning}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
           >
-            ➕ Add Person
+            {scanning ? "Stop Scanning" : "Scan QR (Camera)"}
           </button>
+
+          <label className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 cursor-pointer transition">
+            Upload QR Image
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleImageUpload}
+            />
+          </label>
         </div>
-      </div>
 
-      {/* List of People (Show Only Names) */}
-      <div className="w-full max-w-lg bg-white shadow-md rounded-lg p-5">
-        <h3 className="text-lg font-semibold mb-3">
-          Delivery Stops ({people.length})
-        </h3>
-        {people.length > 0 ? (
-          <ul className="space-y-2">
-            {people.map((person, index) => (
-              <li
-                key={index}
-                className="flex justify-between items-center p-3 border rounded-md bg-gray-50 hover:bg-gray-100 group"
-              >
-                <span className="font-medium text-gray-800">{person.name}</span>
-                <button
-                  onClick={() => deletePerson(person._id, person.name)}
-                  className="text-red-600 hover:text-red-800 opacity-0 group-hover:opacity-100 transition-opacity"
+        {/* Scanner View */}
+        {scanning && <div id={regionId} className="mt-4" />}
+        <div id="upload-region" style={{ display: "none" }} />
+
+        {/* Manual Input Form */}
+        <div className="w-full max-w-md bg-white shadow-md rounded-lg p-5">
+          <h3 className="text-lg font-semibold mb-3">Add Manually</h3>
+          <div className="space-y-3">
+            <input
+              type="text"
+              placeholder="Enter Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full border p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <input
+              type="text"
+              placeholder="Enter Address"
+              value={manualAddress}
+              onChange={(e) => setManualAddress(e.target.value)}
+              className="w-full border p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <button
+              onClick={addManually}
+              className="w-full bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700 transition"
+            >
+              ➕ Add Person
+            </button>
+          </div>
+        </div>
+
+        {/* List of People (Show Only Names) */}
+        <div className="w-full max-w-lg bg-white shadow-md rounded-lg p-5">
+          <h3 className="text-lg font-semibold mb-3">
+            Delivery Stops ({people.length})
+          </h3>
+          {people.length > 0 ? (
+            <ul className="space-y-2">
+              {people.map((person, index) => (
+                <li
+                  key={index}
+                  className="flex justify-between items-center p-3 border rounded-md bg-gray-50 hover:bg-gray-100 group"
                 >
-                  ❌
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-gray-500 italic">No stops added yet.</p>
-        )}
-      </div>
+                  <span className="font-medium text-gray-800">
+                    {person.name}
+                  </span>
+                  <button
+                    onClick={() => deletePerson(person._id, person.name)}
+                    className="text-red-600 hover:text-red-800 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    ❌
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-gray-500 italic">No stops added yet.</p>
+          )}
+        </div>
 
-      {/* Done Button (Future: send to route optimizer) */}
-      <button
-        onClick={() => {
-          console.log("Final Delivery List:", people);
-          alert(`Ready to optimize route for ${people.length} stops!`);
-        }}
-        className="mt-4 bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition"
-      >
-        ✅ Optimize Route
-      </button>
-    </div>
+        {/* Done Button (Future: send to route optimizer) */}
+        <button
+          onClick={() => {
+            console.log("Final Delivery List:", people);
+            alert(`Ready to delivery for ${people.length} stops!`);
+          }}
+          className="mt-4 bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition"
+        >
+          ✅ mark Location
+        </button>
+      </div>
+    </Layout>
   );
 };
 

@@ -1,11 +1,21 @@
 import React from "react";
-import { Routes, Route } from "react-router-dom"; // ✅ Required for routing
-import Layout from "./components/layout/Layout";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+// ✅ Required for routing
+
+import HomePage from "./components/homePage/HomePage";
+import QrScanner from "./components/qr_scanner/QrScanner";
+import MapComponent from "./components/map/MapComponent";
 
 function App() {
   return (
     <>
-      <Layout />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/map" element={<MapComponent />} />
+          <Route path="/qrpage" element={<QrScanner />} />
+        </Routes>
+      </BrowserRouter>
     </>
   );
 }

@@ -6,15 +6,15 @@ const Header = () => {
   const navList = (
     <ul className="flex space-x-3 text-black  font-bold text-md px-5 ">
       <li>
-        <p>Home</p>
+        <Link to={"/"}>Home</Link>
       </li>
 
       <li>
-        <p>Qr-Scan</p>
+        <Link to={"/qrpage"}>Qr-Scan</Link>
       </li>
 
       <li>
-        <p>Map</p>
+        <Link to={"/map"}>Map</Link>
       </li>
     </ul>
   );

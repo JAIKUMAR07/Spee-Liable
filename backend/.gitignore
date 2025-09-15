@@ -29,7 +29,7 @@ pids
 *.pid
 *.seed
 *.pid.lock
-
+env
 # Debug
 .DS_Store
 .idea

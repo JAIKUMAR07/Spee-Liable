@@ -162,9 +162,10 @@ export const useMapOperations = () => {
     error,
     routeOrder,
     isRoutingActive,
+    setRouteOrder, // This must be included
+    routingControlRef,
     searchInputRef,
     mapRef,
-    routingControlRef,
     setError,
     setMultipleMarkers,
     setRouteOrder,

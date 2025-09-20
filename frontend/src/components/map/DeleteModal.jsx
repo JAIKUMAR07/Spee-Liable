@@ -4,7 +4,7 @@ const DeleteModal = ({ showModal, deleting, onClose, onDelete }) => {
   if (!showModal) return null;
 
   return (
-    <div className="fixed inset-0 backdrop-blur-sm bg-white/30 flex justify-center items-center z-50">
+    <div className="fixed inset-0 backdrop-blur-sm bg-white/30 flex justify-center items-center z-500">
       <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
         <h2 className="text-xl font-bold mb-4 text-center text-gray-800">
           Confirm Deletion
@@ -22,7 +22,7 @@ const DeleteModal = ({ showModal, deleting, onClose, onDelete }) => {
             Cancel
           </button>
           <button
-            onClick={onDelete}
+            onClick={onDelete} // Use onDelete directly
             className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-xl transition"
             disabled={deleting}
           >

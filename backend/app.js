@@ -2,7 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import cors from "cors";
-
+import deleveryMarksMapRouter from "./routes/deleveryMarksMap.route.js";
 import deliveryStopsRouter from "./routes/deliveryStops.route.js";
 dotenv.config(); // Load environment variables from .env file
 
@@ -26,6 +26,8 @@ mongoose
 // We will create this file next
 
 app.use("/api/delivery-stops", deliveryStopsRouter); // All requests to /api/delivery-stops will be handled here
+
+app.use("/api/delivery-marks", deleveryMarksMapRouter); // All requests to /api/delivery-marks will be handled here
 
 // Basic route to test if server is running
 app.get("/", (req, res) => {

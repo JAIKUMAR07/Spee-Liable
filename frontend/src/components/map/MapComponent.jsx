@@ -88,11 +88,20 @@ const MapComponent = () => {
   const handleDeleteDeliveries = async () => {
     try {
       setDeleting(true);
-      await fetch("https://delivery-tw6a.onrender.com/api/delivery/all", {
+      await fetch("http://localhost:5000/api/delivery-marks", {
         method: "DELETE",
       });
+
+      // Clear markers and route order
       setMultipleMarkers([]);
       setRouteOrder([]);
+
+      // Remove the routing path from the map
+      if (routingControlRef.current) {
+        mapRef.current?.removeControl(routingControlRef.current);
+        routingControlRef.current = null;
+      }
+
       setShowModal(false);
     } catch (err) {
       setError("Failed to delete deliveries.");
@@ -161,7 +170,7 @@ const MapComponent = () => {
           showModal={showModal}
           deleting={deleting}
           onClose={() => setShowModal(false)}
-          onDelete={handleDeleteDeliveries}
+          onDelete={handleDeleteDeliveries} // Just pass one function
         />
       </div>
     </Layout>

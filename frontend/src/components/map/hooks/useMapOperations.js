@@ -2,26 +2,18 @@ import { useState, useRef } from "react";
 import L from "leaflet";
 
 export const useMapOperations = () => {
-  //stores the current user’s latitude & longitude.
   const [userLocation, setUserLocation] = useState(null);
-
   const [searchLocation, setSearchLocation] = useState(null);
-  // array of delivery stop markers (position, name, address, etc.).
   const [multipleMarkers, setMultipleMarkers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  //stores order of stops after optimizing route.
   const [routeOrder, setRouteOrder] = useState([]);
-
-  //It’s true when you’ve optimized a route (user location → delivery stops).
-  //It’s false when there’s no route or you’ve reset the map.
   const [isRoutingActive, setIsRoutingActive] = useState(false);
 
   const searchInputRef = useRef(null);
   const mapRef = useRef(null);
   const routingControlRef = useRef(null);
 
-  // user current locaiton
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
       setError("Geolocation is not supported by your browser.");
@@ -41,21 +33,16 @@ export const useMapOperations = () => {
     );
   };
 
-  // Fetch delivery stops from backend
   const fetchDeliveries = async () => {
     try {
       setLoading(true);
       const res = await fetch("http://localhost:5000/api/delivery-stops");
       if (!res.ok) throw new Error("Failed to fetch deliveries");
 
-      // getting delivery details
       const deliveries = await res.json();
-
-      // add into markers component for displaying on map
       const updatedMarkers = [];
 
       for (const delivery of deliveries) {
-        // not compalsary that if they can add delivery   lcoaiton or address only
         if (
           delivery.location &&
           delivery.location.lat &&
@@ -66,19 +53,17 @@ export const useMapOperations = () => {
             name: delivery.name || "Unknown",
             address: delivery.address,
             phone_num: delivery.mobile_number || "N/A",
-
+            pincode: delivery.pincode || "N/A",
             position: [delivery.location.lat, delivery.location.lng],
           });
         } else {
-          const fullAddress = `${delivery.address}}`;
-          // getting coordinates from  address but may be #remove
+          const fullAddress = `${delivery.address}, ${delivery.pincode || ""}`;
           const coordinates = await geocodeAddress(fullAddress);
           if (coordinates) {
             updatedMarkers.push({
               _id: delivery._id,
               name: delivery.name || "Unknown",
               address: delivery.address,
-
               phone_num: delivery.mobile_number || "N/A",
               pincode: delivery.pincode || "N/A",
               position: coordinates,
@@ -114,7 +99,6 @@ export const useMapOperations = () => {
       ...multipleMarkers.map((m) => L.latLng(...m.position)),
     ];
 
-    // create routing path
     routingControlRef.current = L.Routing.control({
       waypoints,
       routeWhileDragging: true,
@@ -163,10 +147,9 @@ export const useMapOperations = () => {
     error,
     routeOrder,
     isRoutingActive,
-    setRouteOrder, // This must be included
-    routingControlRef,
     searchInputRef,
     mapRef,
+    routingControlRef,
     setError,
     setMultipleMarkers,
     setRouteOrder,

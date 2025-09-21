@@ -7,6 +7,7 @@ const DeliveryMarkers = ({
   searchLocation,
   multipleMarkers,
   routeOrder,
+  onDeleteStop, // Add this prop
 }) => {
   return (
     <>
@@ -39,14 +40,6 @@ const DeliveryMarkers = ({
           >
             <Popup>
               <div className="text-sm space-y-1 font-medium min-w-[200px]">
-                <div className="font-semibold text-blue-800">{marker.name}</div>
-                <div className="text-gray-600">📍 {marker.address}</div>
-                {marker.phone_num !== "N/A" && (
-                  <div className="text-gray-600">📱 {marker.phone_num}</div>
-                )}
-                {marker.pincode !== "N/A" && (
-                  <div className="text-gray-600">📦 {marker.pincode}</div>
-                )}
                 {isOptimized ? (
                   <div className="mt-2 p-1 bg-green-100 text-green-800 text-xs rounded text-center font-bold">
                     ✅ Optimized Stop #{orderIndex}
@@ -56,6 +49,25 @@ const DeliveryMarkers = ({
                     📍 Stop #{index + 1}
                   </div>
                 )}
+                <div className="font-semibold  text-blue-800">
+                  {marker.name}
+                </div>
+
+                <div className="text-gray-600">📍 {marker.address}</div>
+                {marker.phone_num !== "N/A" && (
+                  <div className="text-gray-600">📱 {marker.phone_num}</div>
+                )}
+
+                <div className="mt-2 flex justify-center space-x-2">
+                  {" "}
+                  <button
+                    onClick={() => onDeleteStop(marker._id, marker.name)}
+                    className="bg-green-700     text-white px-2 py-1 rounded"
+                  >
+                    {" "}
+                    arrived
+                  </button>
+                </div>
               </div>
             </Popup>
           </Marker>

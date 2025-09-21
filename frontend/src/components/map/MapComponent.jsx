@@ -24,8 +24,10 @@ const MapComponent = () => {
     routeOrder,
     searchInputRef,
     mapRef,
+    routingControlRef,
     setError,
     setMultipleMarkers,
+    setRouteOrder,
     setSearchLocation,
     getCurrentLocation,
     fetchDeliveries,
@@ -40,6 +42,36 @@ const MapComponent = () => {
     fetchDeliveries();
     getCurrentLocation();
   }, []);
+
+  // MOVE THIS FUNCTION INSIDE THE COMPONENT
+  const handleDeleteStop = async (id, name) => {
+    if (!window.confirm(`Mark "${name}" as arrived and remove from list?`)) {
+      return;
+    }
+
+    try {
+      // Delete from backend
+      const response = await fetch(
+        `http://localhost:5000/api/delivery-stops/${id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to delete from backend");
+      }
+
+      // Remove from local state - use the functions from your hook
+      setMultipleMarkers((prev) => prev.filter((marker) => marker._id !== id));
+      setRouteOrder((prev) => prev.filter((markerId) => markerId !== id));
+
+      alert(`"${name}" marked as arrived and removed successfully!`);
+    } catch (error) {
+      console.error("Error deleting stop:", error);
+      alert("Failed to mark as arrived. Please try again.");
+    }
+  };
 
   const handleSearch = async () => {
     const locationName = searchInputRef.current.value.trim();
@@ -126,6 +158,7 @@ const MapComponent = () => {
         />
 
         <div className="rounded-lg border border-gray-300 relative">
+          {/* REMOVE THE DUPLICATE MapContainer - KEEP ONLY THIS ONE */}
           <MapContainer
             ref={mapRef}
             center={userLocation || [20.5937, 78.9629]}
@@ -139,12 +172,15 @@ const MapComponent = () => {
             />
 
             <AutoCenterOnLocation location={userLocation} />
+
             <DeliveryMarkers
               userLocation={userLocation}
               searchLocation={searchLocation}
               multipleMarkers={multipleMarkers}
               routeOrder={routeOrder}
+              onDeleteStop={handleDeleteStop}
             />
+
             <RouteOrderPanel
               routeOrder={routeOrder}
               multipleMarkers={multipleMarkers}
@@ -170,7 +206,7 @@ const MapComponent = () => {
           showModal={showModal}
           deleting={deleting}
           onClose={() => setShowModal(false)}
-          onDelete={handleDeleteDeliveries} // Just pass one function
+          onDelete={handleDeleteDeliveries}
         />
       </div>
     </Layout>

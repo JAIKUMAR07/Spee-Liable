@@ -66,11 +66,11 @@ export const useMapOperations = () => {
             name: delivery.name || "Unknown",
             address: delivery.address,
             phone_num: delivery.mobile_number || "N/A",
-            pincode: delivery.pincode || "N/A",
+
             position: [delivery.location.lat, delivery.location.lng],
           });
         } else {
-          const fullAddress = `${delivery.address}, ${delivery.pincode || ""}`;
+          const fullAddress = `${delivery.address}}`;
           // getting coordinates from  address but may be #remove
           const coordinates = await geocodeAddress(fullAddress);
           if (coordinates) {
@@ -78,6 +78,7 @@ export const useMapOperations = () => {
               _id: delivery._id,
               name: delivery.name || "Unknown",
               address: delivery.address,
+
               phone_num: delivery.mobile_number || "N/A",
               pincode: delivery.pincode || "N/A",
               position: coordinates,

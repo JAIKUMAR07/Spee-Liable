@@ -144,7 +144,7 @@ const MapComponent = () => {
 
   return (
     <Layout>
-      <div className="p-4 bg-white rounded-xl shadow-md space-y-6">
+      <div className="p-4 bg-green-50 rounded-xl shadow-md space-y-6">
         <MapControls
           searchInputRef={searchInputRef}
           loading={loading}

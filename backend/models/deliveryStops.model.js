@@ -25,7 +25,7 @@ const DeliveryStopSchema = new mongoose.Schema(
     },
     available: {
       type: String,
-      enum: ["available", "unavailable", "unknown"],
+      enum: ["available", "unavailable"],
       default: "unknown",
     },
   },

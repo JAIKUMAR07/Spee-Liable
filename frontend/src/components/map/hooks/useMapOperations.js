@@ -81,7 +81,7 @@ export const useMapOperations = () => {
     }
   };
 
-  const handleOptimizeRoute = async (reorderMarkersByRoute) => {
+  const handleOptimizeRoute = async (optimizationAlgorithm) => {
     if (!userLocation || multipleMarkers.length === 0) {
       setError(
         "Add at least one delivery stop and ensure your location is detected."
@@ -94,11 +94,21 @@ export const useMapOperations = () => {
       routingControlRef.current = null;
     }
 
+    // Use the new optimization algorithm
+    const orderedIds = optimizationAlgorithm(userLocation, multipleMarkers);
+    setRouteOrder(orderedIds);
+
+    // Create waypoints based on optimized order
+    const orderedMarkers = orderedIds.map((id) =>
+      multipleMarkers.find((marker) => marker._id === id)
+    );
+
     const waypoints = [
       L.latLng(...userLocation),
-      ...multipleMarkers.map((m) => L.latLng(...m.position)),
+      ...orderedMarkers.map((m) => L.latLng(...m.position)),
     ];
 
+    // Create the route visualization
     routingControlRef.current = L.Routing.control({
       waypoints,
       routeWhileDragging: true,
@@ -114,12 +124,7 @@ export const useMapOperations = () => {
           1
         );
         const totalTime = Math.round(routes[0].summary.totalTime / 60);
-        const orderedIds = reorderMarkersByRoute(
-          multipleMarkers,
-          routes[0].coordinates
-        );
 
-        setRouteOrder(orderedIds);
         alert(`Route optimized! Total: ${totalDistance} km, ~${totalTime} min`);
       })
       .addTo(mapRef.current);

@@ -7,6 +7,8 @@ import "leaflet-routing-machine";
 import Layout from "../layout/Layout";
 import { useMapOperations } from "./hooks/useMapOperations";
 import { reorderMarkersByRoute, geocodeAddress } from "./utils/mapUtils";
+
+import { optimizeRoute2Opt } from "./utils/routeOptimization";
 import MapControls from "./MapControls";
 import DeliveryMarkers from "./DeliveryMarkers";
 import RouteOrderPanel from "./RouteOrderPanel";
@@ -153,7 +155,7 @@ const MapComponent = () => {
           onSearch={handleSearch}
           onAddMarker={handleAddMarker}
           onGetLocation={getCurrentLocation}
-          onOptimizeRoute={() => handleOptimizeRoute(reorderMarkersByRoute)}
+          onOptimizeRoute={() => handleOptimizeRoute(optimizeRoute2Opt)}
           onReset={handleReset}
         />
 

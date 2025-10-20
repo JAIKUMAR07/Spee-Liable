@@ -4,6 +4,7 @@ import express from "express";
 const router = express.Router(); // Router lets us define routes in a separate file
 // Import the Mongoose model
 import DeliveryStop from "../models/deliveryStops.model.js";
+
 // ==========================
 // @desc    Get all delivery stops
 // @route   GET /api/delivery-stops
@@ -54,6 +55,53 @@ router.post("/", async (req, res) => {
   } catch (error) {
     // If validation fails or schema mismatch, return 400 (Bad Request)
     res.status(400).json({ message: error.message });
+  }
+});
+
+// ==========================
+// @desc    Update a delivery stop's availability
+// @route   PATCH /api/delivery-stops/:id
+// @access  Public
+// ==========================
+router.patch("/:id", async (req, res) => {
+  try {
+    const { available } = req.body;
+
+    // Basic validation
+    if (!available) {
+      return res
+        .status(400)
+        .json({ message: "Please provide availability status" });
+    }
+
+    // Validate the available value
+    const validStatuses = ["available", "unavailable", "unknown"];
+    if (!validStatuses.includes(available)) {
+      return res.status(400).json({
+        message: "Availability must be one of: available, unavailable, unknown",
+      });
+    }
+
+    // Find and update the stop
+    const stop = await DeliveryStop.findById(req.params.id);
+    if (!stop) {
+      return res.status(404).json({ message: "Delivery stop not found" });
+    }
+
+    // Update only the available field
+    stop.available = available;
+
+    // Save the updated stop
+    const updatedStop = await stop.save();
+
+    // Return the updated document
+    res.json(updatedStop);
+  } catch (error) {
+    // Handle errors
+    if (error.name === "CastError") {
+      return res.status(400).json({ message: "Invalid delivery stop ID" });
+    }
+    res.status(500).json({ message: error.message });
   }
 });
 

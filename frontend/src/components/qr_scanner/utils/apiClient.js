@@ -15,3 +15,6 @@ export const deliveryStopsAPI = {
   // Delete all delivery stops
   deleteAll: () => axios.delete(`${API_BASE_URL}/delivery-stops`),
 };
+
+// Export as default for easier imports
+export default deliveryStopsAPI;

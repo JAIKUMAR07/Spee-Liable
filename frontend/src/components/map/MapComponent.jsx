@@ -3,6 +3,7 @@ import { MapContainer, TileLayer } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
 import "leaflet-routing-machine";
+import deliveryAPI from "../qr_scanner/utils/apiClient";
 
 import Layout from "../layout/Layout";
 import { useMapOperations } from "./hooks/useMapOperations";
@@ -40,7 +41,7 @@ const MapComponent = () => {
 
   const [showModal, setShowModal] = React.useState(false);
   const [deleting, setDeleting] = React.useState(false);
-
+  const [addingMarker, setAddingMarker] = React.useState(false);
   useEffect(() => {
     fetchDeliveries();
     getCurrentLocation();
@@ -52,6 +53,7 @@ const MapComponent = () => {
     }
 
     try {
+      // Delete from backend first
       const response = await fetch(
         `http://localhost:5000/api/delivery-stops/${id}`,
         {
@@ -63,6 +65,7 @@ const MapComponent = () => {
         throw new Error("Failed to delete from backend");
       }
 
+      // Then remove from local state
       setMultipleMarkers((prev) => prev.filter((marker) => marker._id !== id));
       setRouteOrder((prev) => prev.filter((markerId) => markerId !== id));
 
@@ -97,26 +100,55 @@ const MapComponent = () => {
       setError("Please enter a location to add.");
       return;
     }
+    setAddingMarker(true); // Start loading
+    try {
+      const coordinates = await geocodeAddress(locationName);
+      if (!coordinates) {
+        setError("Location not found");
+        return;
+      }
 
-    const coordinates = await geocodeAddress(locationName);
-    if (!coordinates) {
-      setError("Location not found");
-      return;
+      // Prepare data for backend
+      const stopData = {
+        name: locationName,
+        address: locationName,
+        location: {
+          lat: coordinates[0],
+          lng: coordinates[1],
+        },
+        mobile_number: "Manually Added",
+        available: "unknown",
+      };
+
+      // Save to backend using API client
+      const response = await deliveryAPI.create(stopData);
+      const savedStop = response.data;
+
+      // Update local state
+      setMultipleMarkers((prev) => [
+        ...prev,
+        {
+          _id: savedStop._id,
+          name: savedStop.name,
+          address: savedStop.address,
+          phone_num: savedStop.mobile_number,
+          pincode: savedStop.pincode || "N/A",
+          position: coordinates,
+          available: savedStop.available,
+        },
+      ]);
+
+      setSearchLocation(null);
+      searchInputRef.current.value = "";
+
+      alert(`"${locationName}" added successfully and saved to database!`);
+    } catch (error) {
+      console.error("Error adding stop:", error);
+      setError("Failed to add stop. Please try again.");
+    } finally {
+      setAddingMarker(false); // End loading
     }
-
-    const newMarker = {
-      _id: `temp-${Date.now()}`,
-      name: locationName,
-      address: locationName,
-      phone_num: "N/A",
-      pincode: "N/A",
-      position: coordinates,
-    };
-
-    setMultipleMarkers((prev) => [...prev, newMarker]);
-    setSearchLocation(null);
   };
-
   const handleDeleteDeliveries = async () => {
     try {
       setDeleting(true);

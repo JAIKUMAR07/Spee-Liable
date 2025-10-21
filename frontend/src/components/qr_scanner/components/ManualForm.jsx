@@ -8,11 +8,11 @@ const ManualForm = ({
 }) => {
   return (
     <div className="w-full max-w-md bg-white shadow-md rounded-lg p-5">
-      <h3 className="text-lg font-semibold mb-3">Add Manually</h3>
+      <h3 className="text-lg font-semibold mb-3">Add Delivery Stop</h3>
       <div className="space-y-3">
         <input
           type="text"
-          placeholder="Enter Name"
+          placeholder="Enter Location Name"
           value={name}
           onChange={onNameChange}
           disabled={loading}
@@ -29,10 +29,20 @@ const ManualForm = ({
         <button
           onClick={onSubmit}
           disabled={loading}
-          className="w-full bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700 disabled:bg-indigo-400 transition"
+          className="w-full bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700 disabled:bg-indigo-400 transition flex items-center justify-center"
         >
-          {loading ? "Adding..." : "➕ Add Person"}
+          {loading ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              Saving...
+            </>
+          ) : (
+            "➕ Add to Database"
+          )}
         </button>
+        <p className="text-xs text-gray-500 text-center">
+          This stop will be saved to the database and persist after refresh.
+        </p>
       </div>
     </div>
   );

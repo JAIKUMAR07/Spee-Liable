@@ -238,6 +238,7 @@ export const useMapOperations = () => {
     setError,
     setMultipleMarkers,
     setRouteOrder,
+    setSearchLocation,
     getCurrentLocation,
     fetchDeliveries,
     handleOptimizeRoute,

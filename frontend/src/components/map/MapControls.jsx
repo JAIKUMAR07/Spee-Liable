@@ -10,6 +10,8 @@ const MapControls = ({
   onGetLocation,
   onOptimizeRoute,
   onReset,
+  onClearRoute, // Add this prop
+  isRoutingActive, // Add this prop
 }) => {
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
@@ -58,11 +60,21 @@ const MapControls = ({
           🧭 Optimize Route
         </button>
 
+        {/* Clear Route Button - Only show when route is active */}
+        {isRoutingActive && (
+          <button
+            onClick={onClearRoute}
+            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+          >
+            🗑️ Clear Route
+          </button>
+        )}
+
         <button
           onClick={onReset}
           className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition"
         >
-          🗑️ Reset
+          🔄 Reset All
         </button>
       </div>
 

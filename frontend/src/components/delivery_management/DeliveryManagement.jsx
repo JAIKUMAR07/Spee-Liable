@@ -2,6 +2,7 @@ import React from "react";
 import Layout from "../layout/Layout";
 import { useDeliveryManagement } from "./hooks/useDeliveryManagement";
 import DeliveryCard from "./DeliveryCard";
+import { useMapOperations } from "../map/hooks/useMapOperations";
 
 const DeliveryManagement = () => {
   const {
@@ -14,6 +15,28 @@ const DeliveryManagement = () => {
     setError,
   } = useDeliveryManagement();
 
+  // Get the refresh function from map operations
+  const { refreshDeliveries } = useMapOperations();
+
+  const handleToggleAvailability = async (id, currentStatus) => {
+    try {
+      await toggleAvailability(id, currentStatus);
+
+      // Refresh the map to reflect changes
+      await refreshDeliveries();
+
+      // Show success message based on new status
+      const newStatus =
+        currentStatus === "available" ? "unavailable" : "available";
+      if (newStatus === "unavailable") {
+        alert("Stop marked as unavailable and removed from map routing.");
+      } else {
+        alert("Stop marked as available and added to map routing.");
+      }
+    } catch (error) {
+      alert("Failed to update status");
+    }
+  };
   // Filter deliveries by status
   const availableDeliveries = deliveries.filter(
     (d) => d.available === "available"
@@ -112,7 +135,7 @@ const DeliveryManagement = () => {
                   <DeliveryCard
                     key={delivery._id}
                     delivery={delivery}
-                    onToggleAvailability={toggleAvailability}
+                    onToggleAvailability={handleToggleAvailability} // Use the new handler
                     onDelete={deleteDelivery}
                   />
                 ))}

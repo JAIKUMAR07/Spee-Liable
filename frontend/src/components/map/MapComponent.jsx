@@ -7,7 +7,6 @@ import "leaflet-routing-machine";
 import Layout from "../layout/Layout";
 import { useMapOperations } from "./hooks/useMapOperations";
 import { reorderMarkersByRoute, geocodeAddress } from "./utils/mapUtils";
-
 import { optimizeRoute2Opt } from "./utils/routeOptimization";
 import MapControls from "./MapControls";
 import DeliveryMarkers from "./DeliveryMarkers";
@@ -24,6 +23,8 @@ const MapComponent = () => {
     loading,
     error,
     routeOrder,
+    isRoutingActive, // ADD THIS
+    setIsRoutingActive, // ADD THIS
     searchInputRef,
     mapRef,
     routingControlRef,
@@ -45,14 +46,12 @@ const MapComponent = () => {
     getCurrentLocation();
   }, []);
 
-  // MOVE THIS FUNCTION INSIDE THE COMPONENT
   const handleDeleteStop = async (id, name) => {
     if (!window.confirm(`Mark "${name}" as arrived and remove from list?`)) {
       return;
     }
 
     try {
-      // Delete from backend
       const response = await fetch(
         `http://localhost:5000/api/delivery-stops/${id}`,
         {
@@ -64,7 +63,6 @@ const MapComponent = () => {
         throw new Error("Failed to delete from backend");
       }
 
-      // Remove from local state - use the functions from your hook
       setMultipleMarkers((prev) => prev.filter((marker) => marker._id !== id));
       setRouteOrder((prev) => prev.filter((markerId) => markerId !== id));
 
@@ -126,11 +124,9 @@ const MapComponent = () => {
         method: "DELETE",
       });
 
-      // Clear markers and route order
       setMultipleMarkers([]);
       setRouteOrder([]);
 
-      // Remove the routing path from the map
       if (routingControlRef.current) {
         mapRef.current?.removeControl(routingControlRef.current);
         routingControlRef.current = null;
@@ -142,6 +138,20 @@ const MapComponent = () => {
     } finally {
       setDeleting(false);
     }
+  };
+
+  const handleClearRoute = () => {
+    if (routingControlRef.current) {
+      mapRef.current?.removeControl(routingControlRef.current);
+      routingControlRef.current = null;
+    }
+    setRouteOrder([]);
+    setIsRoutingActive(false);
+
+    localStorage.removeItem("deliveryRouteOrder");
+    localStorage.removeItem("deliveryIsRoutingActive");
+
+    alert("Route cleared successfully!");
   };
 
   return (
@@ -157,10 +167,11 @@ const MapComponent = () => {
           onGetLocation={getCurrentLocation}
           onOptimizeRoute={() => handleOptimizeRoute(optimizeRoute2Opt)}
           onReset={handleReset}
+          onClearRoute={handleClearRoute}
+          isRoutingActive={isRoutingActive}
         />
 
         <div className="rounded-lg border border-gray-300 relative">
-          {/* REMOVE THE DUPLICATE MapContainer - KEEP ONLY THIS ONE */}
           <MapContainer
             ref={mapRef}
             center={userLocation || [20.5937, 78.9629]}
@@ -178,7 +189,12 @@ const MapComponent = () => {
             <DeliveryMarkers
               userLocation={userLocation}
               searchLocation={searchLocation}
-              multipleMarkers={multipleMarkers}
+              multipleMarkers={multipleMarkers.filter(
+                (marker) =>
+                  marker.available === "available" ||
+                  !marker.available ||
+                  marker.available === "unknown"
+              )}
               routeOrder={routeOrder}
               onDeleteStop={handleDeleteStop}
             />
@@ -193,6 +209,7 @@ const MapComponent = () => {
         <RouteSummary
           routeOrder={routeOrder}
           multipleMarkers={multipleMarkers}
+          isRoutingActive={isRoutingActive} // Add this prop
         />
 
         <div className="flex justify-center">

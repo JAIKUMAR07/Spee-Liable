@@ -74,11 +74,27 @@ const optimizeRouteNearestNeighbor = (userLocation, markers) => {
 export const optimizeRoute2Opt = (userLocation, markers) => {
   // Handle edge cases
   if (markers.length === 0) return [];
-  if (markers.length === 1) return [0]; // Single stop
+  if (markers.length === 1) return [markers[0]._id]; // Return the actual ID
 
-  // Step 1: Get initial route using a simple algorithm
-  let bestRoute = optimizeRouteNearestNeighbor(userLocation, markers);
-  let bestDistance = calculateTotalDistance(userLocation, markers, bestRoute);
+  // FILTER: Only use available markers for routing
+  const availableMarkers = markers.filter(
+    (marker) =>
+      marker.available === "available" ||
+      !marker.available ||
+      marker.available === "unknown"
+  );
+
+  // Handle edge cases for available markers
+  if (availableMarkers.length === 0) return [];
+  if (availableMarkers.length === 1) return [availableMarkers[0]._id];
+
+  // Step 1: Get initial route using available markers only
+  let bestRoute = optimizeRouteNearestNeighbor(userLocation, availableMarkers);
+  let bestDistance = calculateTotalDistance(
+    userLocation,
+    availableMarkers,
+    bestRoute
+  );
   let improved = true;
 
   // Step 2: Keep improving until no more improvements
@@ -92,7 +108,7 @@ export const optimizeRoute2Opt = (userLocation, markers) => {
         const newRoute = twoOptSwap(bestRoute, i, j);
         const newDistance = calculateTotalDistance(
           userLocation,
-          markers,
+          availableMarkers,
           newRoute
         );
 
@@ -108,12 +124,19 @@ export const optimizeRoute2Opt = (userLocation, markers) => {
     }
   }
 
-  // Convert array indices to marker IDs
-  return bestRoute.map((index) => markers[index]._id);
+  // Convert array indices to marker IDs - use availableMarkers, not original markers
+  return bestRoute.map((index) => availableMarkers[index]._id);
 };
 
 // Export the simple algorithm as fallback
 export const optimizeRouteNearestNeighborExport = (userLocation, markers) => {
-  const route = optimizeRouteNearestNeighbor(userLocation, markers);
-  return route.map((index) => markers[index]._id);
+  const availableMarkers = markers.filter(
+    (marker) =>
+      marker.available === "available" ||
+      !marker.available ||
+      marker.available === "unknown"
+  );
+
+  const route = optimizeRouteNearestNeighbor(userLocation, availableMarkers);
+  return route.map((index) => availableMarkers[index]._id);
 };

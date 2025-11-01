@@ -11,11 +11,37 @@ import StopsList from "./components/StopsList";
 const QrScanner = () => {
   const [name, setName] = useState("");
   const [manualAddress, setManualAddress] = useState("");
+  const [addingManually, setAddingManually] = useState(false);
 
   const { stops, loading, error, addStop, deleteStop, setError } =
     useDeliveryStops();
   const { scanning, toggleScanning, regionId } =
     useQrScanner(handleScanSuccess);
+
+  // SIMPLE FIX: Replace only this function
+  const geocodeAddress = async (address) => {
+    try {
+      // Simple working CORS proxy
+      const response = await fetch(
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${address}&limit=1`
+        )}`
+      );
+
+      const data = await response.json();
+
+      if (data && data.length > 0) {
+        return {
+          lat: parseFloat(data[0].lat),
+          lng: parseFloat(data[0].lon),
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error("Geocoding error:", error);
+      return null;
+    }
+  };
 
   // Handle scan success
   async function handleScanSuccess(decodedText) {
@@ -23,7 +49,7 @@ const QrScanner = () => {
       const stopData = parseQrData(decodedText);
       const newStop = await addStop(stopData);
       alert(`${newStop.name} added successfully!`);
-      setScanning(false);
+      toggleScanning();
     } catch (err) {
       alert(err.message);
     }
@@ -45,27 +71,40 @@ const QrScanner = () => {
     }
   };
 
-  // Add stop manually
+  // Add stop manually - SIMPLIFIED
   const addManually = async () => {
     if (!name.trim() || !manualAddress.trim()) {
       alert("Please enter both name and address.");
       return;
     }
 
+    setAddingManually(true);
     try {
+      // Get coordinates
+      const location = await geocodeAddress(manualAddress.trim());
+
       const stopData = {
         name: name.trim(),
         address: manualAddress.trim(),
         mobile_number: "Not scanned",
         available: "unknown",
-        location: { lat: 0, lng: 0 }, // Default location
+        location: location || { lat: 20.5937, lng: 78.9629 }, // Use actual or default
       };
 
       await addStop(stopData);
       setName("");
       setManualAddress("");
+
+      if (location) {
+        alert(`"${name.trim()}" added successfully with coordinates!`);
+      } else {
+        alert(`"${name.trim()}" added with default coordinates!`);
+      }
     } catch (error) {
-      // Error is already handled in the hook
+      console.error("Error adding manual stop:", error);
+      alert("Failed to add stop. Please try again.");
+    } finally {
+      setAddingManually(false);
     }
   };
 
@@ -86,7 +125,7 @@ const QrScanner = () => {
   useEffect(() => {
     if (error) {
       alert(error);
-      setError(null); // Clear error after showing
+      setError(null);
     }
   }, [error, setError]);
 
@@ -103,7 +142,6 @@ const QrScanner = () => {
           onImageUpload={handleImageUpload}
         />
 
-        {/* Scanner View */}
         {scanning && <div id={regionId} className="mt-4" />}
         <div id="upload-region" style={{ display: "none" }} />
 
@@ -113,7 +151,7 @@ const QrScanner = () => {
           onNameChange={(e) => setName(e.target.value)}
           onAddressChange={(e) => setManualAddress(e.target.value)}
           onSubmit={addManually}
-          loading={loading}
+          loading={loading || addingManually}
         />
 
         <StopsList

@@ -4,7 +4,7 @@ const RouteOrderPanel = ({ routeOrder, multipleMarkers }) => {
   if (routeOrder.length === 0) return null;
 
   return (
-    <div className="absolute bottom-4 left-4 bg-white p-3 rounded-lg shadow-lg z-10 max-w-xs">
+    <div className="absolute bottom-8 left-8 bg-white p-3 rounded-lg shadow-xl border border-gray-200 z-5000 max-w-xs">
       <h4 className="font-bold text-gray-800 mb-1">
         Optimized Delivery Order:
       </h4>

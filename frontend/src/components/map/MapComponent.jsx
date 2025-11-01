@@ -24,8 +24,10 @@ const MapComponent = () => {
     loading,
     error,
     routeOrder,
-    isRoutingActive, // ADD THIS
-    setIsRoutingActive, // ADD THIS
+    isRoutingActive,
+    setIsRoutingActive,
+    locationPermissionDenied, // ADD THIS
+    resetLocationPermission, // ADD THIS
     searchInputRef,
     mapRef,
     routingControlRef,
@@ -42,6 +44,7 @@ const MapComponent = () => {
   const [showModal, setShowModal] = React.useState(false);
   const [deleting, setDeleting] = React.useState(false);
   const [addingMarker, setAddingMarker] = React.useState(false);
+
   useEffect(() => {
     fetchDeliveries();
     getCurrentLocation();
@@ -149,6 +152,7 @@ const MapComponent = () => {
       setAddingMarker(false); // End loading
     }
   };
+
   const handleDeleteDeliveries = async () => {
     try {
       setDeleting(true);
@@ -189,6 +193,33 @@ const MapComponent = () => {
   return (
     <Layout>
       <div className="p-4 bg-green-50 rounded-xl shadow-md space-y-6">
+        {/* ADD LOCATION PERMISSION WARNING HERE */}
+        {locationPermissionDenied && (
+          <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
+            <p className="font-semibold">📍 Location access is blocked</p>
+            <p className="mt-1">To use automatic location detection:</p>
+            <ol className="list-decimal list-inside mt-2 ml-2">
+              <li>Click the lock icon (🔒) in your browser's address bar</li>
+              <li>Change "Location" permission to "Allow"</li>
+              <li>Refresh the page or click "Try Again" below</li>
+            </ol>
+            <div className="mt-3 flex gap-2">
+              <button
+                onClick={resetLocationPermission}
+                className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded text-sm font-medium transition"
+              >
+                🔄 Try Again
+              </button>
+              <button
+                onClick={() => window.location.reload()}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium transition"
+              >
+                🔃 Refresh Page
+              </button>
+            </div>
+          </div>
+        )}
+
         <MapControls
           searchInputRef={searchInputRef}
           loading={loading}
@@ -203,7 +234,7 @@ const MapComponent = () => {
           isRoutingActive={isRoutingActive}
         />
 
-        <div className="rounded-lg border border-gray-300 relative">
+        <div className="rounded-lg border-2 flex justify-center border-gray-300 p-5 relative">
           <MapContainer
             ref={mapRef}
             center={userLocation || [20.5937, 78.9629]}
@@ -230,18 +261,18 @@ const MapComponent = () => {
               routeOrder={routeOrder}
               onDeleteStop={handleDeleteStop}
             />
-
-            <RouteOrderPanel
-              routeOrder={routeOrder}
-              multipleMarkers={multipleMarkers}
-            />
           </MapContainer>
+
+          <RouteOrderPanel
+            routeOrder={routeOrder}
+            multipleMarkers={multipleMarkers}
+          />
         </div>
 
         <RouteSummary
           routeOrder={routeOrder}
           multipleMarkers={multipleMarkers}
-          isRoutingActive={isRoutingActive} // Add this prop
+          isRoutingActive={isRoutingActive}
         />
 
         <div className="flex justify-center">

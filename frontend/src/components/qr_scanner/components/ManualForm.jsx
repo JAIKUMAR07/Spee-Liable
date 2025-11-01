@@ -20,7 +20,7 @@ const ManualForm = ({
         />
         <input
           type="text"
-          placeholder="Enter Address"
+          placeholder="Enter Full Address"
           value={address}
           onChange={onAddressChange}
           disabled={loading}
@@ -34,15 +34,12 @@ const ManualForm = ({
           {loading ? (
             <>
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-              Saving...
+              Adding...
             </>
           ) : (
             "➕ Add to Database"
           )}
         </button>
-        <p className="text-xs text-gray-500 text-center">
-          This stop will be saved to the database and persist after refresh.
-        </p>
       </div>
     </div>
   );

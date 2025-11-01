@@ -37,14 +37,18 @@ const DeliveryManagement = () => {
       alert("Failed to update status");
     }
   };
+
+  // FIX: Ensure deliveries is always an array before using filter
+  const safeDeliveries = Array.isArray(deliveries) ? deliveries : [];
+
   // Filter deliveries by status
-  const availableDeliveries = deliveries.filter(
+  const availableDeliveries = safeDeliveries.filter(
     (d) => d.available === "available"
   );
-  const unavailableDeliveries = deliveries.filter(
+  const unavailableDeliveries = safeDeliveries.filter(
     (d) => d.available === "unavailable"
   );
-  const unknownDeliveries = deliveries.filter(
+  const unknownDeliveries = safeDeliveries.filter(
     (d) => !d.available || d.available === "unknown"
   );
 
@@ -135,7 +139,7 @@ const DeliveryManagement = () => {
                   <DeliveryCard
                     key={delivery._id}
                     delivery={delivery}
-                    onToggleAvailability={handleToggleAvailability} // Use the new handler
+                    onToggleAvailability={handleToggleAvailability}
                     onDelete={deleteDelivery}
                   />
                 ))}
@@ -184,17 +188,18 @@ const DeliveryManagement = () => {
           )}
 
           {/* Empty State */}
-          {deliveries.length === 0 && !loading && (
-            <div className="text-center py-12">
-              <div className="text-gray-400 text-6xl mb-4">📦</div>
-              <h3 className="text-xl font-semibold text-gray-600 mb-2">
-                No delivery stops found
-              </h3>
-              <p className="text-gray-500">
-                Add some delivery stops using the QR scanner first.
-              </p>
-            </div>
-          )}
+          {safeDeliveries.length === 0 &&
+            !loading && ( // FIX: Use safeDeliveries here
+              <div className="text-center py-12">
+                <div className="text-gray-400 text-6xl mb-4">📦</div>
+                <h3 className="text-xl font-semibold text-gray-600 mb-2">
+                  No delivery stops found
+                </h3>
+                <p className="text-gray-500">
+                  Add some delivery stops using the QR scanner first.
+                </p>
+              </div>
+            )}
         </div>
       </div>
     </Layout>

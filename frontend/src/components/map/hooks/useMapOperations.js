@@ -9,6 +9,8 @@ export const useMapOperations = () => {
   const [error, setError] = useState(null);
   const [routeOrder, setRouteOrder] = useState([]);
   const [isRoutingActive, setIsRoutingActive] = useState(false);
+  const [locationPermissionDenied, setLocationPermissionDenied] =
+    useState(false);
 
   const searchInputRef = useRef(null);
   const mapRef = useRef(null);
@@ -46,17 +48,48 @@ export const useMapOperations = () => {
       return;
     }
 
+    // Check if permission was previously denied
+    if (locationPermissionDenied) {
+      setError(
+        "Location permission was denied. Please enable it in your browser settings."
+      );
+      return;
+    }
+
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
         setUserLocation([latitude, longitude]);
+        setLocationPermissionDenied(false);
+        setError(null);
       },
       (err) => {
         console.warn("Geolocation error:", err.message);
-        setError("Could not get your location. Using default center.");
+
+        if (err.code === err.PERMISSION_DENIED) {
+          setLocationPermissionDenied(true);
+          setError(
+            "Location access denied. Please enable location permissions in your browser settings to use this feature."
+          );
+        } else {
+          setError("Could not get your location. Using default center.");
+        }
+
+        // Set default India center as fallback
         setUserLocation([20.5937, 78.9629]);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000, // 10 seconds
+        maximumAge: 600000, // 10 minutes
       }
     );
+  };
+
+  // Add a method to manually reset location permission
+  const resetLocationPermission = () => {
+    setLocationPermissionDenied(false);
+    setError(null);
   };
 
   const refreshDeliveries = async () => {
@@ -71,8 +104,14 @@ export const useMapOperations = () => {
 
       const deliveries = await res.json();
 
+      // FIX: Handle both response formats (array or {data: array})
+      let deliveryData = deliveries;
+      if (deliveries && deliveries.data && Array.isArray(deliveries.data)) {
+        deliveryData = deliveries.data;
+      }
+
       // FILTER: Only include available or unknown status deliveries
-      const availableDeliveries = deliveries.filter(
+      const availableDeliveries = deliveryData.filter(
         (delivery) =>
           delivery.available === "available" ||
           !delivery.available ||
@@ -120,9 +159,6 @@ export const useMapOperations = () => {
       }
 
       setMultipleMarkers(updatedMarkers);
-
-      // Don't reset routeOrder here - keep the persisted route
-      // setRouteOrder([]);
     } catch (err) {
       setError("Failed to load delivery stops from server.");
     } finally {
@@ -130,12 +166,37 @@ export const useMapOperations = () => {
     }
   };
 
+  // Geocode function (make sure this exists)
+  const geocodeAddress = async (address) => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+          address
+        )}`
+      );
+      const data = await response.json();
+
+      if (data && data.length > 0) {
+        return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+      }
+      throw new Error("Address not found");
+    } catch (error) {
+      console.error("Geocoding error:", error);
+      return [20.5937, 78.9629]; // Default to India center
+    }
+  };
+
   // Recreate route when markers and routeOrder are both available
   useEffect(() => {
-    if (routeOrder.length > 0 && multipleMarkers.length > 0 && mapRef.current) {
+    if (
+      routeOrder.length > 0 &&
+      multipleMarkers.length > 0 &&
+      mapRef.current &&
+      userLocation
+    ) {
       recreateRoute();
     }
-  }, [routeOrder, multipleMarkers]);
+  }, [routeOrder, multipleMarkers, userLocation]);
 
   const recreateRoute = () => {
     // Clear existing route
@@ -149,8 +210,10 @@ export const useMapOperations = () => {
       .map((id) => multipleMarkers.find((marker) => marker._id === id))
       .filter((marker) => marker !== undefined);
 
-    if (orderedMarkers.length === 0) {
-      console.log("No valid markers found for persisted route");
+    if (orderedMarkers.length === 0 || !userLocation) {
+      console.log(
+        "No valid markers found for persisted route or no user location"
+      );
       return;
     }
 
@@ -202,8 +265,6 @@ export const useMapOperations = () => {
     const orderedIds = optimizationAlgorithm(userLocation, multipleMarkers);
     setRouteOrder(orderedIds);
     setIsRoutingActive(true);
-
-    // The route will be automatically recreated by the useEffect above
   };
 
   const handleReset = () => {
@@ -211,6 +272,7 @@ export const useMapOperations = () => {
     setRouteOrder([]);
     setIsRoutingActive(false);
     setError(null);
+    setLocationPermissionDenied(false);
 
     // Clear persisted data
     localStorage.removeItem("deliveryRouteOrder");
@@ -222,7 +284,6 @@ export const useMapOperations = () => {
     }
   };
 
-  // In useMapOperations.js - update the return statement:
   return {
     userLocation,
     searchLocation,
@@ -231,7 +292,8 @@ export const useMapOperations = () => {
     error,
     routeOrder,
     isRoutingActive,
-    setIsRoutingActive, // Add this
+    locationPermissionDenied, // Add this
+    setIsRoutingActive,
     searchInputRef,
     mapRef,
     routingControlRef,
@@ -240,6 +302,7 @@ export const useMapOperations = () => {
     setRouteOrder,
     setSearchLocation,
     getCurrentLocation,
+    resetLocationPermission, // Add this
     fetchDeliveries,
     handleOptimizeRoute,
     handleReset,

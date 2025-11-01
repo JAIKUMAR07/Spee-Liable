@@ -26,8 +26,9 @@ const MapComponent = () => {
     routeOrder,
     isRoutingActive,
     setIsRoutingActive,
-    locationPermissionDenied, // ADD THIS
-    resetLocationPermission, // ADD THIS
+    locationPermissionDenied,
+    resetLocationPermission,
+    isGettingLocation, // Add this
     searchInputRef,
     mapRef,
     routingControlRef,
@@ -36,6 +37,7 @@ const MapComponent = () => {
     setRouteOrder,
     setSearchLocation,
     getCurrentLocation,
+    refreshLocation, // Add this
     fetchDeliveries,
     handleOptimizeRoute,
     handleReset,
@@ -232,8 +234,8 @@ const MapComponent = () => {
           onReset={handleReset}
           onClearRoute={handleClearRoute}
           isRoutingActive={isRoutingActive}
+          isGettingLocation={isGettingLocation} // Pass this prop
         />
-
         <div className="rounded-lg border-2 flex justify-center border-gray-300 p-5 relative">
           <MapContainer
             ref={mapRef}
@@ -290,6 +292,7 @@ const MapComponent = () => {
           onClose={() => setShowModal(false)}
           onDelete={handleDeleteDeliveries}
         />
+        {/* ... rest of your JSX */}
       </div>
     </Layout>
   );

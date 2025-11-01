@@ -11,10 +11,12 @@ export const useMapOperations = () => {
   const [isRoutingActive, setIsRoutingActive] = useState(false);
   const [locationPermissionDenied, setLocationPermissionDenied] =
     useState(false);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
 
   const searchInputRef = useRef(null);
   const mapRef = useRef(null);
   const routingControlRef = useRef(null);
+  const watchIdRef = useRef(null);
 
   // Load persisted state on component mount
   useEffect(() => {
@@ -42,6 +44,15 @@ export const useMapOperations = () => {
     }
   }, [routeOrder, isRoutingActive]);
 
+  // Cleanup watch position on unmount
+  useEffect(() => {
+    return () => {
+      if (watchIdRef.current) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+      }
+    };
+  }, []);
+
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
       setError("Geolocation is not supported by your browser.");
@@ -56,32 +67,114 @@ export const useMapOperations = () => {
       return;
     }
 
+    setIsGettingLocation(true);
+    setError(null);
+
+    console.log("Getting current location...");
+
+    // SIMPLIFIED: Use a single reliable geolocation call
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const { latitude, longitude } = pos.coords;
+        const { latitude, longitude, accuracy } = pos.coords;
+        console.log(
+          `📍 Location found: ${latitude}, ${longitude} (accuracy: ${accuracy}m)`
+        );
+
         setUserLocation([latitude, longitude]);
         setLocationPermissionDenied(false);
-        setError(null);
+        setIsGettingLocation(false);
+
+        // Start continuous tracking for live updates
+        startContinuousTracking();
       },
       (err) => {
         console.warn("Geolocation error:", err.message);
+        setIsGettingLocation(false);
 
-        if (err.code === err.PERMISSION_DENIED) {
-          setLocationPermissionDenied(true);
-          setError(
-            "Location access denied. Please enable location permissions in your browser settings to use this feature."
-          );
-        } else {
-          setError("Could not get your location. Using default center.");
+        switch (err.code) {
+          case err.PERMISSION_DENIED:
+            setLocationPermissionDenied(true);
+            setError(
+              "Location access denied. Please allow location permissions in your browser."
+            );
+            break;
+          case err.POSITION_UNAVAILABLE:
+            setError(
+              "Location information is unavailable. Check your device settings."
+            );
+            break;
+          case err.TIMEOUT:
+            setError(
+              "Location request timed out. Please try again or check your connection."
+            );
+            // Try again with different settings
+            setTimeout(() => getCurrentLocationFallback(), 1000);
+            break;
+          default:
+            setError("Could not get your location. Using default center.");
+            setUserLocation([20.5937, 78.9629]);
         }
-
-        // Set default India center as fallback
-        setUserLocation([20.5937, 78.9629]);
       },
       {
-        enableHighAccuracy: true,
+        // More relaxed settings for better success rate
+        enableHighAccuracy: true, // Try to get GPS if available
+        timeout: 15000, // 15 seconds timeout
+        maximumAge: 60000, // Accept cached position up to 1 minute old
+      }
+    );
+  };
+
+  // Fallback method with different settings
+  const getCurrentLocationFallback = () => {
+    console.log("Trying fallback location method...");
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        console.log(`📍 Fallback location: ${latitude}, ${longitude}`);
+        setUserLocation([latitude, longitude]);
+        setLocationPermissionDenied(false);
+        startContinuousTracking();
+      },
+      (err) => {
+        console.warn("Fallback also failed:", err.message);
+        setError("Cannot access your location. Using default map center.");
+        setUserLocation([20.5937, 78.9629]); // Default India center
+      },
+      {
+        enableHighAccuracy: false, // Don't wait for GPS
         timeout: 10000, // 10 seconds
-        maximumAge: 600000, // 10 minutes
+        maximumAge: 300000, // Accept 5-minute old cached position
+      }
+    );
+  };
+
+  const startContinuousTracking = () => {
+    if (watchIdRef.current) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+    }
+
+    console.log("Starting continuous location tracking...");
+
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      (pos) => {
+        const { latitude, longitude, accuracy } = pos.coords;
+
+        // Always update for live tracking
+        setUserLocation([latitude, longitude]);
+
+        console.log(
+          `🔄 Live update: ${latitude}, ${longitude} (accuracy: ${accuracy}m)`
+        );
+      },
+      (err) => {
+        console.warn("Continuous tracking error:", err.message);
+        // Don't show error for tracking failures, just log
+      },
+      {
+        enableHighAccuracy: false, // Use less battery
+        timeout: 10000,
+        maximumAge: 30000, // Update every 30 seconds max
       }
     );
   };
@@ -90,6 +183,18 @@ export const useMapOperations = () => {
   const resetLocationPermission = () => {
     setLocationPermissionDenied(false);
     setError(null);
+    // Clear any existing location data and try again
+    setUserLocation(null);
+    setTimeout(() => getCurrentLocation(), 500);
+  };
+
+  // Force refresh location
+  const refreshLocation = () => {
+    console.log("Manually refreshing location...");
+    if (watchIdRef.current) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+    }
+    getCurrentLocation();
   };
 
   const refreshDeliveries = async () => {
@@ -166,7 +271,7 @@ export const useMapOperations = () => {
     }
   };
 
-  // Geocode function (make sure this exists)
+  // Geocode function
   const geocodeAddress = async (address) => {
     try {
       const response = await fetch(
@@ -182,7 +287,7 @@ export const useMapOperations = () => {
       throw new Error("Address not found");
     } catch (error) {
       console.error("Geocoding error:", error);
-      return [20.5937, 78.9629]; // Default to India center
+      return [20.5937, 78.9629];
     }
   };
 
@@ -282,6 +387,12 @@ export const useMapOperations = () => {
       mapRef.current?.removeControl(routingControlRef.current);
       routingControlRef.current = null;
     }
+
+    // Stop watching location
+    if (watchIdRef.current) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
   };
 
   return {
@@ -292,7 +403,8 @@ export const useMapOperations = () => {
     error,
     routeOrder,
     isRoutingActive,
-    locationPermissionDenied, // Add this
+    locationPermissionDenied,
+    isGettingLocation,
     setIsRoutingActive,
     searchInputRef,
     mapRef,
@@ -302,7 +414,8 @@ export const useMapOperations = () => {
     setRouteOrder,
     setSearchLocation,
     getCurrentLocation,
-    resetLocationPermission, // Add this
+    refreshLocation,
+    resetLocationPermission,
     fetchDeliveries,
     handleOptimizeRoute,
     handleReset,

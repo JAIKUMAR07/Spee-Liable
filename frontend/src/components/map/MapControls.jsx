@@ -10,8 +10,9 @@ const MapControls = ({
   onGetLocation,
   onOptimizeRoute,
   onReset,
-  onClearRoute, // Add this prop
-  isRoutingActive, // Add this prop
+  onClearRoute,
+  isRoutingActive,
+  isGettingLocation,
 }) => {
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
@@ -47,9 +48,17 @@ const MapControls = ({
 
         <button
           onClick={onGetLocation}
-          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+          disabled={isGettingLocation}
+          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-green-400 transition flex items-center"
         >
-          📍 My Location
+          {isGettingLocation ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              Getting Location...
+            </>
+          ) : (
+            "📍 My Location"
+          )}
         </button>
 
         <button
@@ -81,6 +90,16 @@ const MapControls = ({
       {error && (
         <div className="p-2 bg-red-100 text-red-700 rounded-md border border-red-300 w-full max-w-md text-center">
           {error}
+          {error.includes("timed out") && (
+            <div className="mt-1 text-sm">
+              <button
+                onClick={onGetLocation}
+                className="text-blue-600 underline"
+              >
+                Try again
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

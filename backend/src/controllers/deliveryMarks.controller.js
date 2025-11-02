@@ -13,3 +13,22 @@ export const deleteAllDeliveryStops = asyncHandler(async (req, res, next) => {
     deletedCount: result.deletedCount,
   });
 });
+
+// @desc    Delete a delivery stop
+// @route   DELETE /api/delivery-stops/:id
+// @access  Public
+export const deleteDeliveryStop = asyncHandler(async (req, res, next) => {
+  const { id } = req.params;
+
+  const stop = await DeliveryStop.findById(id);
+  if (!stop) {
+    return next(new AppError("Delivery stop not found", 404));
+  }
+
+  await stop.deleteOne();
+
+  res.status(200).json({
+    success: true,
+    message: "Delivery stop deleted successfully",
+  });
+});

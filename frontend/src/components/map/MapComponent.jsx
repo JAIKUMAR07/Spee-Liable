@@ -8,7 +8,7 @@ import deliveryAPI from "../qr_scanner/utils/apiClient";
 import Layout from "../layout/Layout";
 import { useMapOperations } from "./hooks/useMapOperations";
 import { reorderMarkersByRoute, geocodeAddress } from "./utils/mapUtils";
-import { optimizeRoute2Opt } from "./utils/routeOptimization";
+
 import MapControls from "./MapControls";
 import DeliveryMarkers from "./DeliveryMarkers";
 import RouteOrderPanel from "./RouteOrderPanel";
@@ -230,7 +230,7 @@ const MapComponent = () => {
           onSearch={handleSearch}
           onAddMarker={handleAddMarker}
           onGetLocation={getCurrentLocation}
-          onOptimizeRoute={() => handleOptimizeRoute(optimizeRoute2Opt)}
+          onOptimizeRoute={handleOptimizeRoute}
           onReset={handleReset}
           onClearRoute={handleClearRoute}
           isRoutingActive={isRoutingActive}

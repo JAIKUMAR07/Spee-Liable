@@ -5,6 +5,7 @@ import cors from "cors";
 import deliveryMarksMapRouter from "./routes/deliveryMarks.route.js";
 import deliveryStopsRouter from "./routes/deliveryStops.route.js";
 import errorHandler from "./middleware/errorHandler.js";
+import optimizationRouter from "./routes/optimization.route.js"; // ADD THIS
 
 dotenv.config();
 
@@ -13,6 +14,8 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+app.use("/api/optimization", optimizationRouter);
 
 // MongoDB Connection
 mongoose
@@ -26,7 +29,7 @@ mongoose
 // Routes
 app.use("/api/delivery-stops", deliveryStopsRouter);
 app.use("/api/delivery-marks", deliveryMarksMapRouter);
-
+app.use("/api/optimization", optimizationRouter); // ADD THIS LINE
 // Basic route to test if server is running
 app.get("/", (req, res) => {
   res.send("Hello from Delivery App Backend!");

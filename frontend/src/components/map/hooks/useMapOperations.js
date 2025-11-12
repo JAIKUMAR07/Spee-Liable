@@ -353,7 +353,7 @@ export const useMapOperations = () => {
     setIsRoutingActive(true);
   };
 
-  const handleOptimizeRoute = async (optimizationAlgorithm) => {
+  const handleOptimizeRoute = async () => {
     if (!userLocation || multipleMarkers.length === 0) {
       setError(
         "Add at least one delivery stop and ensure your location is detected."
@@ -361,17 +361,65 @@ export const useMapOperations = () => {
       return;
     }
 
-    if (routingControlRef.current) {
-      mapRef.current?.removeControl(routingControlRef.current);
-      routingControlRef.current = null;
+    setLoading(true);
+    setError(null);
+
+    try {
+      console.log("🔍 Sending to backend optimization:");
+      console.log("User Location:", userLocation);
+      console.log("Markers count:", multipleMarkers.length);
+
+      // Call backend optimization API
+      const response = await fetch(
+        "http://localhost:5000/api/optimization/optimize-route",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userLocation: userLocation,
+            markers: multipleMarkers,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("📥 Backend response:", data);
+
+      if (!data || !data.success) {
+        throw new Error(
+          data?.error || "Optimization failed - no data returned"
+        );
+      }
+
+      // Clear existing route
+      if (routingControlRef.current) {
+        mapRef.current?.removeControl(routingControlRef.current);
+        routingControlRef.current = null;
+      }
+
+      // Set the optimized route order from backend
+      setRouteOrder(data.data.optimizedOrder);
+      setIsRoutingActive(true);
+
+      console.log(
+        `✅ Route optimized via backend! ${data.data.totalStops} stops, ${
+          data.data.totalDistance || "N/A"
+        } km`
+      );
+      console.log("Optimized order:", data.data.optimizedOrder);
+    } catch (error) {
+      console.error("Backend optimization error:", error);
+      setError(`Failed to optimize route: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
-
-    // Use the new optimization algorithm
-    const orderedIds = optimizationAlgorithm(userLocation, multipleMarkers);
-    setRouteOrder(orderedIds);
-    setIsRoutingActive(true);
   };
-
   const handleReset = () => {
     setMultipleMarkers([]);
     setRouteOrder([]);

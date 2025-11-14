@@ -4,8 +4,11 @@ import {
   deleteDeliveryStop,
 } from "../controllers/deliveryMarks.controller.js";
 
-const router = express.Router();
+import { protect, authorize } from "../middleware/auth.js";
 
+const router = express.Router();
+// All routes protected - only admin can delete all
+router.use(protect);
 router.route("/").delete(deleteAllDeliveryStops);
 router.route("/:id").delete(deleteDeliveryStop);
 

@@ -1,19 +1,17 @@
 import { useState, useEffect } from "react";
-import { deliveryStopsAPI } from "../utils/apiClient";
+import { deliveryStopsAPI } from "../../../utils/apiClient"; // ✅ Correct import path
 
 export const useDeliveryStops = () => {
   const [stops, setStops] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Fetch all stops - FIXED for Axios
+  // Fetch all stops - UPDATED with better error handling
   const fetchStops = async () => {
     try {
       setLoading(true);
       const response = await deliveryStopsAPI.getAll();
 
-      // FIX: With Axios, data is in response.data
-      // Your backend returns { success: true, data: [], count: 0 }
       const apiResponse = response.data;
 
       if (apiResponse.success) {
@@ -23,20 +21,21 @@ export const useDeliveryStops = () => {
       }
       setError(null);
     } catch (err) {
-      setError("Failed to fetch delivery stops");
+      const errorMessage =
+        err.response?.data?.error || "Failed to fetch delivery stops";
+      setError(errorMessage);
       console.error("Fetch error:", err);
-      setStops([]); // Ensure stops is always an array
+      setStops([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Add new stop - FIXED for Axios
+  // Add new stop - UPDATED with better error handling
   const addStop = async (stopData) => {
     try {
       const response = await deliveryStopsAPI.create(stopData);
 
-      // FIX: With Axios, data is in response.data
       const apiResponse = response.data;
 
       if (apiResponse.success) {
@@ -48,21 +47,20 @@ export const useDeliveryStops = () => {
         throw new Error(apiResponse.error || "Failed to add delivery stop");
       }
     } catch (err) {
-      const errorMsg =
+      const errorMessage =
         err.response?.data?.error ||
         err.message ||
         "Failed to add delivery stop";
-      setError(errorMsg);
-      throw new Error(errorMsg);
+      setError(errorMessage);
+      throw new Error(errorMessage);
     }
   };
 
-  // Delete stop - FIXED for Axios
+  // Delete stop - UPDATED with better error handling
   const deleteStop = async (id) => {
     try {
       const response = await deliveryStopsAPI.delete(id);
 
-      // FIX: With Axios, data is in response.data
       const apiResponse = response.data;
 
       if (apiResponse.success) {
@@ -72,10 +70,10 @@ export const useDeliveryStops = () => {
         throw new Error(apiResponse.error || "Failed to delete stop");
       }
     } catch (err) {
-      const errorMsg =
+      const errorMessage =
         err.response?.data?.error || err.message || "Failed to delete stop";
-      setError(errorMsg);
-      throw new Error(errorMsg);
+      setError(errorMessage);
+      throw new Error(errorMessage);
     }
   };
 

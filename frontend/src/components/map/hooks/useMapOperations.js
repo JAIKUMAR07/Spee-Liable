@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import L from "leaflet";
+import { deliveryStopsAPI, optimizationAPI } from "../../../utils/apiClient"; // ✅ Add API client imports
 
 export const useMapOperations = () => {
   const [userLocation, setUserLocation] = useState(null);
@@ -72,7 +73,6 @@ export const useMapOperations = () => {
 
     console.log("Getting current location...");
 
-    // SIMPLIFIED: Use a single reliable geolocation call
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude, accuracy } = pos.coords;
@@ -83,8 +83,6 @@ export const useMapOperations = () => {
         setUserLocation([latitude, longitude]);
         setLocationPermissionDenied(false);
         setIsGettingLocation(false);
-
-        // Start continuous tracking for live updates
         startContinuousTracking();
       },
       (err) => {
@@ -107,7 +105,6 @@ export const useMapOperations = () => {
             setError(
               "Location request timed out. Please try again or check your connection."
             );
-            // Try again with different settings
             setTimeout(() => getCurrentLocationFallback(), 1000);
             break;
           default:
@@ -116,15 +113,13 @@ export const useMapOperations = () => {
         }
       },
       {
-        // More relaxed settings for better success rate
-        enableHighAccuracy: true, // Try to get GPS if available
-        timeout: 15000, // 15 seconds timeout
-        maximumAge: 60000, // Accept cached position up to 1 minute old
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 60000,
       }
     );
   };
 
-  // Fallback method with different settings
   const getCurrentLocationFallback = () => {
     console.log("Trying fallback location method...");
 
@@ -139,12 +134,12 @@ export const useMapOperations = () => {
       (err) => {
         console.warn("Fallback also failed:", err.message);
         setError("Cannot access your location. Using default map center.");
-        setUserLocation([20.5937, 78.9629]); // Default India center
+        setUserLocation([20.5937, 78.9629]);
       },
       {
-        enableHighAccuracy: false, // Don't wait for GPS
-        timeout: 10000, // 10 seconds
-        maximumAge: 300000, // Accept 5-minute old cached position
+        enableHighAccuracy: false,
+        timeout: 10000,
+        maximumAge: 300000,
       }
     );
   };
@@ -159,36 +154,29 @@ export const useMapOperations = () => {
     watchIdRef.current = navigator.geolocation.watchPosition(
       (pos) => {
         const { latitude, longitude, accuracy } = pos.coords;
-
-        // Always update for live tracking
         setUserLocation([latitude, longitude]);
-
         console.log(
           `🔄 Live update: ${latitude}, ${longitude} (accuracy: ${accuracy}m)`
         );
       },
       (err) => {
         console.warn("Continuous tracking error:", err.message);
-        // Don't show error for tracking failures, just log
       },
       {
-        enableHighAccuracy: false, // Use less battery
+        enableHighAccuracy: false,
         timeout: 10000,
-        maximumAge: 30000, // Update every 30 seconds max
+        maximumAge: 30000,
       }
     );
   };
 
-  // Add a method to manually reset location permission
   const resetLocationPermission = () => {
     setLocationPermissionDenied(false);
     setError(null);
-    // Clear any existing location data and try again
     setUserLocation(null);
     setTimeout(() => getCurrentLocation(), 500);
   };
 
-  // Force refresh location
   const refreshLocation = () => {
     console.log("Manually refreshing location...");
     if (watchIdRef.current) {
@@ -201,18 +189,19 @@ export const useMapOperations = () => {
     await fetchDeliveries();
   };
 
+  // ✅ UPDATED: Use API client instead of direct fetch
   const fetchDeliveries = async () => {
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:5000/api/delivery-stops");
-      if (!res.ok) throw new Error("Failed to fetch deliveries");
+      const response = await deliveryStopsAPI.getAll(); // ✅ Using API client
 
-      const deliveries = await res.json();
-
-      // FIX: Handle both response formats (array or {data: array})
-      let deliveryData = deliveries;
-      if (deliveries && deliveries.data && Array.isArray(deliveries.data)) {
-        deliveryData = deliveries.data;
+      let deliveryData = response.data;
+      if (
+        deliveryData &&
+        deliveryData.data &&
+        Array.isArray(deliveryData.data)
+      ) {
+        deliveryData = deliveryData.data;
       }
 
       // FILTER: Only include available or unknown status deliveries
@@ -265,7 +254,10 @@ export const useMapOperations = () => {
 
       setMultipleMarkers(updatedMarkers);
     } catch (err) {
-      setError("Failed to load delivery stops from server.");
+      const errorMessage =
+        err.response?.data?.error ||
+        "Failed to load delivery stops from server.";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -304,13 +296,11 @@ export const useMapOperations = () => {
   }, [routeOrder, multipleMarkers, userLocation]);
 
   const recreateRoute = () => {
-    // Clear existing route
     if (routingControlRef.current) {
       mapRef.current?.removeControl(routingControlRef.current);
       routingControlRef.current = null;
     }
 
-    // Create waypoints based on persisted route order
     const orderedMarkers = routeOrder
       .map((id) => multipleMarkers.find((marker) => marker._id === id))
       .filter((marker) => marker !== undefined);
@@ -327,7 +317,6 @@ export const useMapOperations = () => {
       ...orderedMarkers.map((m) => L.latLng(...m.position)),
     ];
 
-    // Recreate the route visualization
     routingControlRef.current = L.Routing.control({
       waypoints,
       routeWhileDragging: true,
@@ -353,6 +342,7 @@ export const useMapOperations = () => {
     setIsRoutingActive(true);
   };
 
+  // ✅ UPDATED: Use API client for optimization
   const handleOptimizeRoute = async () => {
     if (!userLocation || multipleMarkers.length === 0) {
       setError(
@@ -369,26 +359,13 @@ export const useMapOperations = () => {
       console.log("User Location:", userLocation);
       console.log("Markers count:", multipleMarkers.length);
 
-      // Call backend optimization API
-      const response = await fetch(
-        "http://localhost:5000/api/optimization/optimize-route",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            userLocation: userLocation,
-            markers: multipleMarkers,
-          }),
-        }
-      );
+      // ✅ Using API client instead of direct fetch
+      const response = await optimizationAPI.optimizeRoute({
+        userLocation: userLocation,
+        markers: multipleMarkers,
+      });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = response.data;
       console.log("📥 Backend response:", data);
 
       if (!data || !data.success) {
@@ -414,12 +391,17 @@ export const useMapOperations = () => {
       );
       console.log("Optimized order:", data.data.optimizedOrder);
     } catch (error) {
+      const errorMessage =
+        error.response?.data?.error ||
+        error.message ||
+        "Failed to optimize route";
       console.error("Backend optimization error:", error);
-      setError(`Failed to optimize route: ${error.message}`);
+      setError(`Failed to optimize route: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
   };
+
   const handleReset = () => {
     setMultipleMarkers([]);
     setRouteOrder([]);

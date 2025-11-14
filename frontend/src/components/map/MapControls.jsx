@@ -13,6 +13,8 @@ const MapControls = ({
   onClearRoute,
   isRoutingActive,
   isGettingLocation,
+  canAddMarker = true, // ✅ New prop for permissions
+  canOptimizeRoute = true, // ✅ New prop for permissions
 }) => {
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
@@ -39,12 +41,15 @@ const MapControls = ({
           {loading ? "Searching..." : "🔍 Search"}
         </button>
 
-        <button
-          onClick={onAddMarker}
-          className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition"
-        >
-          ➕ Add Stop
-        </button>
+        {/* ✅ Conditionally show Add Stop button based on permissions */}
+        {canAddMarker && (
+          <button
+            onClick={onAddMarker}
+            className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition"
+          >
+            ➕ Add Stop
+          </button>
+        )}
 
         <button
           onClick={onGetLocation}
@@ -61,13 +66,16 @@ const MapControls = ({
           )}
         </button>
 
-        <button
-          onClick={onOptimizeRoute}
-          className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
-          disabled={multipleMarkers.length === 0}
-        >
-          🧭 Optimize Route
-        </button>
+        {/* ✅ Conditionally show Optimize Route button based on permissions */}
+        {canOptimizeRoute && (
+          <button
+            onClick={onOptimizeRoute}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+            disabled={multipleMarkers.length === 0}
+          >
+            🧭 Optimize Route
+          </button>
+        )}
 
         {/* Clear Route Button - Only show when route is active */}
         {isRoutingActive && (

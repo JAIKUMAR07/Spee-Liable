@@ -3,11 +3,12 @@ import { MapContainer, TileLayer } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
 import "leaflet-routing-machine";
-import deliveryAPI from "../qr_scanner/utils/apiClient";
+import { deliveryStopsAPI } from "../../utils/apiClient"; // ✅ Updated import
+import { useAuth } from "../../context/AuthContext"; // ✅ Add auth hook
 
 import Layout from "../layout/Layout";
 import { useMapOperations } from "./hooks/useMapOperations";
-import { reorderMarkersByRoute, geocodeAddress } from "./utils/mapUtils";
+import { geocodeAddress } from "./utils/mapUtils";
 
 import MapControls from "./MapControls";
 import DeliveryMarkers from "./DeliveryMarkers";
@@ -28,7 +29,7 @@ const MapComponent = () => {
     setIsRoutingActive,
     locationPermissionDenied,
     resetLocationPermission,
-    isGettingLocation, // Add this
+    isGettingLocation,
     searchInputRef,
     mapRef,
     routingControlRef,
@@ -37,11 +38,13 @@ const MapComponent = () => {
     setRouteOrder,
     setSearchLocation,
     getCurrentLocation,
-    refreshLocation, // Add this
+    refreshLocation,
     fetchDeliveries,
     handleOptimizeRoute,
     handleReset,
   } = useMapOperations();
+
+  const { can } = useAuth(); // ✅ Get permission checks
 
   const [showModal, setShowModal] = React.useState(false);
   const [deleting, setDeleting] = React.useState(false);
@@ -52,23 +55,20 @@ const MapComponent = () => {
     getCurrentLocation();
   }, []);
 
+  // ✅ UPDATED: Use API client and add permission check
   const handleDeleteStop = async (id, name) => {
+    if (!can("manage_deliveries")) {
+      alert("You don't have permission to mark deliveries as arrived");
+      return;
+    }
+
     if (!window.confirm(`Mark "${name}" as arrived and remove from list?`)) {
       return;
     }
 
     try {
-      // Delete from backend first
-      const response = await fetch(
-        `http://localhost:5000/api/delivery-stops/${id}`,
-        {
-          method: "DELETE",
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to delete from backend");
-      }
+      // ✅ Using API client instead of direct fetch
+      await deliveryStopsAPI.delete(id);
 
       // Then remove from local state
       setMultipleMarkers((prev) => prev.filter((marker) => marker._id !== id));
@@ -77,7 +77,10 @@ const MapComponent = () => {
       alert(`"${name}" marked as arrived and removed successfully!`);
     } catch (error) {
       console.error("Error deleting stop:", error);
-      alert("Failed to mark as arrived. Please try again.");
+      const errorMessage =
+        error.response?.data?.error ||
+        "Failed to mark as arrived. Please try again.";
+      alert(errorMessage);
     }
   };
 
@@ -99,13 +102,20 @@ const MapComponent = () => {
     if (mapRef.current) mapRef.current.flyTo(coordinates, 15);
   };
 
+  // ✅ UPDATED: Add permission check for adding markers
   const handleAddMarker = async () => {
+    if (!can("manage_deliveries")) {
+      alert("You don't have permission to add delivery stops");
+      return;
+    }
+
     const locationName = searchInputRef.current.value.trim();
     if (!locationName) {
       setError("Please enter a location to add.");
       return;
     }
-    setAddingMarker(true); // Start loading
+
+    setAddingMarker(true);
     try {
       const coordinates = await geocodeAddress(locationName);
       if (!coordinates) {
@@ -125,8 +135,8 @@ const MapComponent = () => {
         available: "unknown",
       };
 
-      // Save to backend using API client
-      const response = await deliveryAPI.create(stopData);
+      // ✅ Using API client
+      const response = await deliveryStopsAPI.create(stopData);
       const savedStop = response.data;
 
       // Update local state
@@ -149,18 +159,25 @@ const MapComponent = () => {
       alert(`"${locationName}" added successfully and saved to database!`);
     } catch (error) {
       console.error("Error adding stop:", error);
-      setError("Failed to add stop. Please try again.");
+      const errorMessage =
+        error.response?.data?.error || "Failed to add stop. Please try again.";
+      setError(errorMessage);
     } finally {
-      setAddingMarker(false); // End loading
+      setAddingMarker(false);
     }
   };
 
+  // ✅ UPDATED: Add permission check for bulk deletion
   const handleDeleteDeliveries = async () => {
+    if (!can("delete_records")) {
+      alert("You don't have permission to delete all deliveries");
+      return;
+    }
+
     try {
       setDeleting(true);
-      await fetch("http://localhost:5000/api/delivery-marks", {
-        method: "DELETE",
-      });
+      // ✅ Using API client - Note: You'll need to add this to your apiClient
+      await deliveryStopsAPI.deleteAll(); // This should call /api/delivery-marks
 
       setMultipleMarkers([]);
       setRouteOrder([]);
@@ -171,8 +188,11 @@ const MapComponent = () => {
       }
 
       setShowModal(false);
+      alert("All deliveries deleted successfully!");
     } catch (err) {
-      setError("Failed to delete deliveries.");
+      const errorMessage =
+        err.response?.data?.error || "Failed to delete deliveries.";
+      setError(errorMessage);
     } finally {
       setDeleting(false);
     }
@@ -195,7 +215,7 @@ const MapComponent = () => {
   return (
     <Layout>
       <div className="p-4 bg-green-50 rounded-xl shadow-md space-y-6">
-        {/* ADD LOCATION PERMISSION WARNING HERE */}
+        {/* Location Permission Warning */}
         {locationPermissionDenied && (
           <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
             <p className="font-semibold">📍 Location access is blocked</p>
@@ -234,8 +254,11 @@ const MapComponent = () => {
           onReset={handleReset}
           onClearRoute={handleClearRoute}
           isRoutingActive={isRoutingActive}
-          isGettingLocation={isGettingLocation} // Pass this prop
+          isGettingLocation={isGettingLocation}
+          canAddMarker={can("manage_deliveries")} // ✅ Pass permissions
+          canOptimizeRoute={can("optimize_routes")}
         />
+
         <div className="rounded-lg border-2 flex justify-center border-gray-300 p-5 relative">
           <MapContainer
             ref={mapRef}
@@ -262,6 +285,7 @@ const MapComponent = () => {
               )}
               routeOrder={routeOrder}
               onDeleteStop={handleDeleteStop}
+              canManage={can("manage_deliveries")} // ✅ Pass permission to markers
             />
           </MapContainer>
 
@@ -277,14 +301,17 @@ const MapComponent = () => {
           isRoutingActive={isRoutingActive}
         />
 
-        <div className="flex justify-center">
-          <button
-            onClick={() => setShowModal(true)}
-            className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-6 rounded-xl shadow-md transition"
-          >
-            🗑️ Delete All Deliveries
-          </button>
-        </div>
+        {/* ✅ Only show delete all button if user has permission */}
+        {can("delete_records") && (
+          <div className="flex justify-center">
+            <button
+              onClick={() => setShowModal(true)}
+              className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-6 rounded-xl shadow-md transition"
+            >
+              🗑️ Delete All Deliveries
+            </button>
+          </div>
+        )}
 
         <DeleteModal
           showModal={showModal}
@@ -292,7 +319,6 @@ const MapComponent = () => {
           onClose={() => setShowModal(false)}
           onDelete={handleDeleteDeliveries}
         />
-        {/* ... rest of your JSX */}
       </div>
     </Layout>
   );

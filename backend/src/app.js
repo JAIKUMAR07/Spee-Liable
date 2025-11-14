@@ -7,6 +7,8 @@ import deliveryStopsRouter from "./routes/deliveryStops.route.js";
 import errorHandler from "./middleware/errorHandler.js";
 import optimizationRouter from "./routes/optimization.route.js"; // ADD THIS
 
+import authRouter from "./routes/auth.route.js";
+import userRouter from "./routes/users.route.js"; // NEW
 dotenv.config();
 
 const app = express();
@@ -27,6 +29,9 @@ mongoose
   .catch((error) => console.error("MongoDB connection failed:", error.message));
 
 // Routes
+// Routes
+app.use("/api/auth", authRouter);
+app.use("/api/users", userRouter); // NEW
 app.use("/api/delivery-stops", deliveryStopsRouter);
 app.use("/api/delivery-marks", deliveryMarksMapRouter);
 app.use("/api/optimization", optimizationRouter); // ADD THIS LINE

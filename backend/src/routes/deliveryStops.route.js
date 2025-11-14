@@ -6,14 +6,24 @@ import {
   updateDeliveryStopAvailability,
   deleteDeliveryStop,
 } from "../controllers/deliveryStops.controller.js";
+import { protect, authorize } from "../middleware/auth.js";
 
 const router = express.Router();
 
-router.route("/").get(getDeliveryStops).post(createDeliveryStop);
+// All routes protected
+router.use(protect);
+
+router
+  .route("/")
+  .get(getDeliveryStops)
+  .post(authorize("admin", "manager", "driver"), createDeliveryStop);
 
 router
   .route("/:id")
-  .patch(updateDeliveryStopAvailability)
-  .delete(deleteDeliveryStop);
+  .patch(
+    authorize("admin", "manager", "driver"),
+    updateDeliveryStopAvailability
+  )
+  .delete(authorize("admin", "manager"), deleteDeliveryStop);
 
 export default router;

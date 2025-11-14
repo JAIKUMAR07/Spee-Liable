@@ -1,4 +1,6 @@
-const StopsList = ({ stops, onDeleteStop, loading }) => {
+import React from "react";
+
+const StopsList = ({ stops, onDeleteStop, loading, canDelete = false }) => {
   if (loading) {
     return (
       <div className="w-full max-w-lg bg-white shadow-md rounded-lg p-5">
@@ -19,19 +21,49 @@ const StopsList = ({ stops, onDeleteStop, loading }) => {
               key={stop._id || index}
               className="flex justify-between items-center p-3 border rounded-md bg-gray-50 hover:bg-gray-100 group"
             >
-              <span className="font-medium text-gray-800">{stop.name}</span>
-              <button
-                onClick={() => onDeleteStop(stop._id, stop.name)}
-                disabled={loading}
-                className="text-red-600 hover:text-red-800 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
-              >
-                ❌
-              </button>
+              <div className="flex-1">
+                <span className="font-medium text-gray-800 block">
+                  {stop.name}
+                </span>
+                <span className="text-xs text-gray-500 block mt-1">
+                  {stop.address}
+                </span>
+                <span
+                  className={`text-xs px-2 py-1 rounded-full ${
+                    stop.available === "available"
+                      ? "bg-green-100 text-green-800"
+                      : stop.available === "unavailable"
+                      ? "bg-red-100 text-red-800"
+                      : "bg-yellow-100 text-yellow-800"
+                  }`}
+                >
+                  {stop.available || "unknown"}
+                </span>
+              </div>
+
+              {/* ✅ Only show delete button if user has permission */}
+              {canDelete && (
+                <button
+                  onClick={() => onDeleteStop(stop._id, stop.name)}
+                  disabled={loading}
+                  className="text-red-600 hover:text-red-800 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50 ml-2"
+                  title="Delete stop"
+                >
+                  ❌
+                </button>
+              )}
             </li>
           ))}
         </ul>
       ) : (
         <p className="text-gray-500 italic">No stops added yet.</p>
+      )}
+
+      {/* ✅ Permission notice for non-deleters */}
+      {stops.length > 0 && !canDelete && (
+        <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-blue-700 text-sm">
+          👀 View only - You don't have permission to delete stops
+        </div>
       )}
     </div>
   );

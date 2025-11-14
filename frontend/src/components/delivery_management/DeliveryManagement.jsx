@@ -3,6 +3,7 @@ import Layout from "../layout/Layout";
 import { useDeliveryManagement } from "./hooks/useDeliveryManagement";
 import DeliveryCard from "./DeliveryCard";
 import { useMapOperations } from "../map/hooks/useMapOperations";
+import { useAuth } from "../../context/AuthContext"; // ✅ Add auth hook
 
 const DeliveryManagement = () => {
   const {
@@ -15,11 +16,17 @@ const DeliveryManagement = () => {
     setError,
   } = useDeliveryManagement();
 
-  // Get the refresh function from map operations
   const { refreshDeliveries } = useMapOperations();
+  const { can } = useAuth(); // ✅ Get permission checks
 
   const handleToggleAvailability = async (id, currentStatus) => {
     try {
+      // ✅ Check permission before action
+      if (!can("manage_deliveries")) {
+        alert("You don't have permission to manage deliveries");
+        return;
+      }
+
       await toggleAvailability(id, currentStatus);
 
       // Refresh the map to reflect changes
@@ -35,6 +42,21 @@ const DeliveryManagement = () => {
       }
     } catch (error) {
       alert("Failed to update status");
+    }
+  };
+
+  const handleDeleteDelivery = async (id) => {
+    // ✅ Check permission before deletion
+    if (!can("delete_records")) {
+      alert("You don't have permission to delete delivery stops");
+      return;
+    }
+
+    try {
+      await deleteDelivery(id);
+      alert("Delivery stop deleted successfully!");
+    } catch (error) {
+      alert("Failed to delete delivery");
     }
   };
 
@@ -140,7 +162,9 @@ const DeliveryManagement = () => {
                     key={delivery._id}
                     delivery={delivery}
                     onToggleAvailability={handleToggleAvailability}
-                    onDelete={deleteDelivery}
+                    onDelete={handleDeleteDelivery} // ✅ Use the wrapped function
+                    canManage={can("manage_deliveries")} // ✅ Pass permission to card
+                    canDelete={can("delete_records")} // ✅ Pass permission to card
                   />
                 ))}
               </div>
@@ -159,8 +183,10 @@ const DeliveryManagement = () => {
                   <DeliveryCard
                     key={delivery._id}
                     delivery={delivery}
-                    onToggleAvailability={toggleAvailability}
-                    onDelete={deleteDelivery}
+                    onToggleAvailability={handleToggleAvailability}
+                    onDelete={handleDeleteDelivery} // ✅ Use the wrapped function
+                    canManage={can("manage_deliveries")}
+                    canDelete={can("delete_records")}
                   />
                 ))}
               </div>
@@ -179,8 +205,10 @@ const DeliveryManagement = () => {
                   <DeliveryCard
                     key={delivery._id}
                     delivery={delivery}
-                    onToggleAvailability={toggleAvailability}
-                    onDelete={deleteDelivery}
+                    onToggleAvailability={handleToggleAvailability}
+                    onDelete={handleDeleteDelivery} // ✅ Use the wrapped function
+                    canManage={can("manage_deliveries")}
+                    canDelete={can("delete_records")}
                   />
                 ))}
               </div>
@@ -188,18 +216,17 @@ const DeliveryManagement = () => {
           )}
 
           {/* Empty State */}
-          {safeDeliveries.length === 0 &&
-            !loading && ( // FIX: Use safeDeliveries here
-              <div className="text-center py-12">
-                <div className="text-gray-400 text-6xl mb-4">📦</div>
-                <h3 className="text-xl font-semibold text-gray-600 mb-2">
-                  No delivery stops found
-                </h3>
-                <p className="text-gray-500">
-                  Add some delivery stops using the QR scanner first.
-                </p>
-              </div>
-            )}
+          {safeDeliveries.length === 0 && !loading && (
+            <div className="text-center py-12">
+              <div className="text-gray-400 text-6xl mb-4">📦</div>
+              <h3 className="text-xl font-semibold text-gray-600 mb-2">
+                No delivery stops found
+              </h3>
+              <p className="text-gray-500">
+                Add some delivery stops using the QR scanner first.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </Layout>

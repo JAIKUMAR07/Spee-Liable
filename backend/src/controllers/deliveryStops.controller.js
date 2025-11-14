@@ -4,7 +4,7 @@ import AppError from "../utils/AppError.js";
 
 // @desc    Get all delivery stops
 // @route   GET /api/delivery-stops
-// @access  Public
+// @access  Private (All authenticated users
 export const getDeliveryStops = asyncHandler(async (req, res, next) => {
   const stops = await DeliveryStop.find().sort({ createdAt: -1 });
 
@@ -17,7 +17,7 @@ export const getDeliveryStops = asyncHandler(async (req, res, next) => {
 
 // @desc    Create a new delivery stop
 // @route   POST /api/delivery-stops
-// @access  Public
+//  @access  Private (Driver, Manager, Admin)
 export const createDeliveryStop = asyncHandler(async (req, res, next) => {
   const { name, location, address, mobile_number, available } = req.body;
 
@@ -34,6 +34,7 @@ export const createDeliveryStop = asyncHandler(async (req, res, next) => {
     address,
     mobile_number: mobile_number || "N/A",
     available: available || "unknown",
+    createdBy: req.user.id, // Track who created this stop
   });
 
   const savedStop = await newStop.save();
@@ -47,6 +48,7 @@ export const createDeliveryStop = asyncHandler(async (req, res, next) => {
 // @desc    Update a delivery stop's availability
 // @route   PATCH /api/delivery-stops/:id
 // @access  Public
+
 export const updateDeliveryStopAvailability = asyncHandler(
   async (req, res, next) => {
     const { available } = req.body;
@@ -83,7 +85,7 @@ export const updateDeliveryStopAvailability = asyncHandler(
 
 // @desc    Delete a delivery stop
 // @route   DELETE /api/delivery-stops/:id
-// @access  Public
+// @access  Private (Manager, Admin only)
 export const deleteDeliveryStop = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
 
@@ -91,7 +93,14 @@ export const deleteDeliveryStop = asyncHandler(async (req, res, next) => {
   if (!stop) {
     return next(new AppError("Delivery stop not found", 404));
   }
-
+  // Only admin/manager or the creator can delete
+  if (
+    req.user.role !== "admin" &&
+    req.user.role !== "manager" &&
+    stop.createdBy.toString() !== req.user.id
+  ) {
+    return next(new AppError("Not authorized to delete this stop", 403));
+  }
   await stop.deleteOne();
 
   res.status(200).json({

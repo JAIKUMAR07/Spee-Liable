@@ -17,6 +17,7 @@ const DeliveryManagement = () => {
   } = useDeliveryManagement();
 
   const { refreshDeliveries } = useMapOperations();
+  const { user } = useAuth();
   const { can } = useAuth(); // ✅ Get permission checks
 
   const handleToggleAvailability = async (id, currentStatus) => {
@@ -48,6 +49,10 @@ const DeliveryManagement = () => {
   const handleDeleteDelivery = async (id) => {
     // ✅ Check permission before deletion
     if (!can("delete_records")) {
+      alert("You don't have permission to delete delivery stops");
+      return;
+    }
+    if (!can("delete_own_records")) {
       alert("You don't have permission to delete delivery stops");
       return;
     }
@@ -92,38 +97,19 @@ const DeliveryManagement = () => {
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
+          // In your JSX, add user context:
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Delivery Management
+              My Delivery Management
             </h1>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Manage delivery stops and their availability status. Unavailable
-              stops will be excluded from route optimization.
+              Manage your delivery stops and their availability status. You can
+              only see and manage stops assigned to you.
             </p>
-
-            {/* Stats */}
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
-              <div className="bg-white rounded-lg p-4 shadow border border-green-200">
-                <div className="text-2xl font-bold text-green-600">
-                  {availableDeliveries.length}
-                </div>
-                <div className="text-sm text-gray-600">Available Stops</div>
-              </div>
-              <div className="bg-white rounded-lg p-4 shadow border border-red-200">
-                <div className="text-2xl font-bold text-red-600">
-                  {unavailableDeliveries.length}
-                </div>
-                <div className="text-sm text-gray-600">Unavailable Stops</div>
-              </div>
-              <div className="bg-white rounded-lg p-4 shadow border border-yellow-200">
-                <div className="text-2xl font-bold text-yellow-600">
-                  {unknownDeliveries.length}
-                </div>
-                <div className="text-sm text-gray-600">Unknown Status</div>
-              </div>
-            </div>
+            <p className="text-sm text-blue-600 mt-2">
+              👤 Currently viewing stops for: <strong>{user?.name}</strong>
+            </p>
           </div>
-
           {/* Error Display */}
           {error && (
             <div className="max-w-4xl mx-auto mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
@@ -138,7 +124,6 @@ const DeliveryManagement = () => {
               </div>
             </div>
           )}
-
           {/* Refresh Button */}
           <div className="text-center mb-8">
             <button
@@ -148,7 +133,6 @@ const DeliveryManagement = () => {
               🔄 Refresh List
             </button>
           </div>
-
           {/* Available Deliveries */}
           {availableDeliveries.length > 0 && (
             <section className="mb-12">
@@ -170,7 +154,6 @@ const DeliveryManagement = () => {
               </div>
             </section>
           )}
-
           {/* Unavailable Deliveries */}
           {unavailableDeliveries.length > 0 && (
             <section className="mb-12">
@@ -192,7 +175,6 @@ const DeliveryManagement = () => {
               </div>
             </section>
           )}
-
           {/* Unknown Status Deliveries */}
           {unknownDeliveries.length > 0 && (
             <section className="mb-12">
@@ -214,7 +196,6 @@ const DeliveryManagement = () => {
               </div>
             </section>
           )}
-
           {/* Empty State */}
           {safeDeliveries.length === 0 && !loading && (
             <div className="text-center py-12">

@@ -1,10 +1,11 @@
 import express from "express";
-
 import {
   getDeliveryStops,
+  getAllDeliveryStops, // ✅ New route
   createDeliveryStop,
   updateDeliveryStopAvailability,
   deleteDeliveryStop,
+  getDeliveryStats, // ✅ New route
 } from "../controllers/deliveryStops.controller.js";
 import { protect, authorize } from "../middleware/auth.js";
 
@@ -15,15 +16,18 @@ router.use(protect);
 
 router
   .route("/")
-  .get(getDeliveryStops)
-  .post(authorize("admin", "manager", "driver"), createDeliveryStop);
+  .get(getDeliveryStops) // ✅ User sees only their stops
+  .post(createDeliveryStop);
+
+// ✅ New route for admin/manager to see all stops
+router.route("/all").get(authorize("admin", "manager"), getAllDeliveryStops);
+
+// ✅ New route for user stats
+router.route("/stats").get(getDeliveryStats);
 
 router
   .route("/:id")
-  .patch(
-    authorize("admin", "manager", "driver"),
-    updateDeliveryStopAvailability
-  )
-  .delete(authorize("admin", "manager"), deleteDeliveryStop);
+  .patch(updateDeliveryStopAvailability)
+  .delete(deleteDeliveryStop);
 
 export default router;

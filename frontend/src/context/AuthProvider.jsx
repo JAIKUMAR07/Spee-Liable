@@ -97,7 +97,7 @@ export const AuthProvider = ({ children }) => {
         "manage_deliveries",
         "scan_qr",
         "optimize_routes",
-        "delete_records",
+        "delete_records", // ✅ Can delete ANY records
         "manage_users",
       ],
       manager: [
@@ -105,19 +105,41 @@ export const AuthProvider = ({ children }) => {
         "manage_deliveries",
         "scan_qr",
         "optimize_routes",
+        "delete_records", // ✅ Can delete ANY records
       ],
       driver: [
         "view_deliveries",
-        "manage_deliveries",
+        "manage_deliveries", // ✅ Can manage their own deliveries
         "scan_qr",
         "optimize_routes",
+        "delete_own_records", // ✅ NEW: Can delete only their own records
       ],
       viewer: ["view_deliveries"],
     };
-
     return permissions[user.role]?.includes(action) || false;
   };
 
+  // ✅ ADD THIS: Check if user can delete a specific record
+  const canDelete = (resource) => {
+    if (!user) return false;
+
+    // Admin and manager can delete anything
+    if (user.role === "admin" || user.role === "manager") {
+      return true;
+    }
+
+    // Drivers can only delete their own records
+    if (user.role === "driver") {
+      // Check if the resource belongs to this user
+      // This assumes resource has createdBy or assignedTo field
+      return (
+        resource?.createdBy?.toString() === user.id ||
+        resource?.assignedTo?.toString() === user.id
+      );
+    }
+
+    return false;
+  };
   const value = {
     user,
     token,

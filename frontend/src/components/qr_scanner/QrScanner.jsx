@@ -134,8 +134,9 @@ const QrScanner = () => {
   };
 
   // ✅ UPDATED: Add permission check for deletion
+  // ✅ UPDATED: Add permission check for deletion
   const handleDeleteStop = async (id, name) => {
-    if (!can("delete_records")) {
+    if (!can("delete_own_records")) {
       alert("You don't have permission to delete delivery stops");
       return;
     }
@@ -153,7 +154,6 @@ const QrScanner = () => {
       alert(errorMessage);
     }
   };
-
   // Show errors
   useEffect(() => {
     if (error) {

@@ -12,8 +12,14 @@ const StopsList = ({ stops, onDeleteStop, loading, canDelete = false }) => {
   return (
     <div className="w-full max-w-lg bg-white shadow-md rounded-lg p-5">
       <h3 className="text-lg font-semibold mb-3">
-        Delivery Stops ({stops.length})
+        My Delivery Stops ({stops.length})
       </h3>
+
+      {/* ✅ UPDATED: Show ownership info */}
+      <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded text-blue-700 text-sm">
+        💼 You can manage and delete your own delivery stops
+      </div>
+
       {stops.length > 0 ? (
         <ul className="space-y-2">
           {stops.map((stop, index) => (
@@ -41,13 +47,13 @@ const StopsList = ({ stops, onDeleteStop, loading, canDelete = false }) => {
                 </span>
               </div>
 
-              {/* ✅ Only show delete button if user has permission */}
-              {canDelete && (
+              {/* ✅ UPDATED: Always show delete button for drivers (they can only delete their own) */}
+              {canDelete || (
                 <button
                   onClick={() => onDeleteStop(stop._id, stop.name)}
                   disabled={loading}
-                  className="text-red-600 hover:text-red-800 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50 ml-2"
-                  title="Delete stop"
+                  className="text-red-600 hover:text-red-800     ml-2"
+                  title="Delete this stop"
                 >
                   ❌
                 </button>
@@ -57,13 +63,6 @@ const StopsList = ({ stops, onDeleteStop, loading, canDelete = false }) => {
         </ul>
       ) : (
         <p className="text-gray-500 italic">No stops added yet.</p>
-      )}
-
-      {/* ✅ Permission notice for non-deleters */}
-      {stops.length > 0 && !canDelete && (
-        <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-blue-700 text-sm">
-          👀 View only - You don't have permission to delete stops
-        </div>
       )}
     </div>
   );

@@ -25,13 +25,27 @@ const DeliveryStopSchema = new mongoose.Schema(
       enum: ["available", "unavailable", "unknown"],
       default: "unknown",
     },
+    // ✅ ADD THIS: Link delivery stops to specific users
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    // ✅ ADD THIS: Assign delivery stops to specific drivers
+    assignedTo: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
   },
   {
     timestamps: true,
   }
 );
 
-// Create an index on the location field for potential geospatial queries later
+// Create indexes for better performance
 DeliveryStopSchema.index({ location: "2dsphere" });
+DeliveryStopSchema.index({ createdBy: 1 }); // ✅ For user-specific queries
+DeliveryStopSchema.index({ assignedTo: 1 }); // ✅ For driver-specific queries
 
 export default mongoose.model("DeliveryStop", DeliveryStopSchema);

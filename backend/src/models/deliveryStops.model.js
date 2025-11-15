@@ -25,17 +25,21 @@ const DeliveryStopSchema = new mongoose.Schema(
       enum: ["available", "unavailable", "unknown"],
       default: "unknown",
     },
-    // ✅ ADD THIS: Link delivery stops to specific users
-    createdBy: {
+    // ✅ Link delivery stops to customer (package owner)
+    customer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
-    // ✅ ADD THIS: Assign delivery stops to specific drivers
+    // ✅ Assign delivery stops to specific drivers
     assignedTo: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+    },
+    // ✅ Track who scanned the package
+    scannedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
     },
   },
   {
@@ -45,7 +49,8 @@ const DeliveryStopSchema = new mongoose.Schema(
 
 // Create indexes for better performance
 DeliveryStopSchema.index({ location: "2dsphere" });
-DeliveryStopSchema.index({ createdBy: 1 }); // ✅ For user-specific queries
-DeliveryStopSchema.index({ assignedTo: 1 }); // ✅ For driver-specific queries
+DeliveryStopSchema.index({ customer: 1 });
+DeliveryStopSchema.index({ assignedTo: 1 });
+DeliveryStopSchema.index({ available: 1 });
 
 export default mongoose.model("DeliveryStop", DeliveryStopSchema);

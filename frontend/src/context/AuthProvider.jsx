@@ -115,37 +115,31 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Check if user has permission for action
+  // ✅ ADD THIS: Check if user has permission for action
   const can = (action) => {
     if (!user) return false;
 
     const permissions = {
-      admin: [
-        "view_deliveries",
-        "manage_deliveries",
-        "scan_qr",
-        "optimize_routes",
-        "delete_records",
-        "manage_users",
-      ],
-      manager: [
-        "view_deliveries",
-        "manage_deliveries",
-        "scan_qr",
-        "optimize_routes",
-        "delete_records",
-      ],
+      admin: ["view_users", "manage_users", "view_all_deliveries"],
       driver: [
         "view_deliveries",
         "manage_deliveries",
         "scan_qr",
         "optimize_routes",
         "delete_own_records",
+        "assign_deliveries",
       ],
-      viewer: ["view_deliveries"],
+      customer: [
+        "view_own_deliveries",
+        "update_delivery_status",
+        "view_notifications",
+      ],
     };
+
     return permissions[user.role]?.includes(action) || false;
   };
 
+  // Check if user can delete a specific record
   // Check if user can delete a specific record
   const canDelete = (resource) => {
     if (!user) return false;
@@ -163,7 +157,6 @@ export const AuthProvider = ({ children }) => {
 
     return false;
   };
-
   const value = {
     user,
     token,
@@ -171,9 +164,9 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
-    updateUser, // Add updateUser to the context value
+    updateUser,
     hasRole,
-    can,
+    can, // ✅ Add the can function to context value
     canDelete,
     isAuthenticated: !!user,
   };

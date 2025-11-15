@@ -6,7 +6,7 @@ import deliveryMarksMapRouter from "./routes/deliveryMarks.route.js";
 import deliveryStopsRouter from "./routes/deliveryStops.route.js";
 import errorHandler from "./middleware/errorHandler.js";
 import optimizationRouter from "./routes/optimization.route.js"; // ADD THIS
-
+import notificationRouter from "./routes/notifications.route.js";
 import authRouter from "./routes/auth.route.js";
 import userRouter from "./routes/users.route.js"; // NEW
 dotenv.config();
@@ -36,6 +36,7 @@ app.use("/api/delivery-stops", deliveryStopsRouter);
 app.use("/api/delivery-marks", deliveryMarksMapRouter);
 app.use("/api/optimization", optimizationRouter); // ADD THIS LINE
 // Basic route to test if server is running
+app.use("/api/notifications", notificationRouter); // ADD THIS
 app.get("/", (req, res) => {
   res.send("Hello from Delivery App Backend!");
 });

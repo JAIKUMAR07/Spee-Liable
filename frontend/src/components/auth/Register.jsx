@@ -123,6 +123,7 @@ const Register = () => {
                 Role
               </label>
               <div className="mt-1">
+                // In the role select field, update options:
                 <select
                   id="role"
                   name="role"
@@ -130,9 +131,9 @@ const Register = () => {
                   onChange={handleChange}
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 >
+                  <option value="customer">Customer</option>
                   <option value="driver">Delivery Driver</option>
-                  <option value="manager">Manager</option>
-                  <option value="viewer">Viewer</option>
+                  {/* Remove admin option - admins should be created manually or have separate registration */}
                 </select>
               </div>
             </div>

@@ -10,6 +10,9 @@ import DeliveryManagement from "./components/delivery_management/DeliveryManagem
 import Login from "./components/auth/Login";
 import Register from "./components/auth/Register";
 import Profile from "./components/profile/Profile";
+import CustomerDashboard from "./components/customer/CustomerDashboard";
+import UserManagement from "./components/admin/UserManagement";
+
 function App() {
   return (
     <AuthProvider>
@@ -18,15 +21,7 @@ function App() {
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          {/* {profile routes } */}
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            }
-          />
+
           {/* Protected Routes */}
           <Route
             path="/"
@@ -36,6 +31,17 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Driver Routes */}
           <Route
             path="/qrpage"
             element={
@@ -44,14 +50,16 @@ function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/map"
             element={
-              <ProtectedRoute requiredPermission="view_deliveries">
+              <ProtectedRoute requiredPermission="optimize_routes">
                 <MapComponent />
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/delivery-management"
             element={
@@ -60,6 +68,27 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          {/* Customer Routes */}
+          <Route
+            path="/customer-dashboard"
+            element={
+              <ProtectedRoute requiredPermission="view_notifications">
+                <CustomerDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Admin Routes */}
+          <Route
+            path="/user-management"
+            element={
+              <ProtectedRoute requiredPermission="view_users">
+                <UserManagement />
+              </ProtectedRoute>
+            }
+          />
+
           {/* Fallback route */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

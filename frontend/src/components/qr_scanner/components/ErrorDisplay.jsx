@@ -1,4 +1,6 @@
 // components/qr_scanner/components/ErrorDisplay.jsx
+import React from "react";
+
 const ErrorDisplay = ({ error, onDismiss }) => {
   if (!error) return null;
 
@@ -11,3 +13,5 @@ const ErrorDisplay = ({ error, onDismiss }) => {
     </div>
   );
 };
+
+export default ErrorDisplay; // ✅ Change to default export

@@ -17,6 +17,7 @@ export const parseQrData = (decodedText) => {
       address: parsedData.address || "Unknown Address",
       mobile_number: parsedData.mobile_number || "N/A",
       available: parsedData.available || "unknown",
+      // Note: customerEmail will be added separately via prompt
     };
   } catch (error) {
     throw new Error(`Failed to parse QR code: ${error.message}`);

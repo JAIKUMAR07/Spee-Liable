@@ -51,6 +51,10 @@ export const login = asyncHandler(async (req, res, next) => {
 export const register = asyncHandler(async (req, res, next) => {
   const { name, email, password, role } = req.body;
 
+  // Validate role - only allow customer and driver roles for registration
+  const allowedRoles = ["customer", "driver"];
+  const userRole = allowedRoles.includes(role) ? role : "customer";
+
   // Check if user exists
   const existingUser = await User.findOne({ email });
   if (existingUser) {
@@ -62,13 +66,12 @@ export const register = asyncHandler(async (req, res, next) => {
     name,
     email,
     password,
-    role: role || "driver",
+    role: userRole, // Use validated role
   });
 
   // Generate token
   const token = generateToken(user._id);
 
-  // ✅ FIX: Return user and token at root level
   res.status(201).json({
     success: true,
     user: {
@@ -80,7 +83,6 @@ export const register = asyncHandler(async (req, res, next) => {
     token,
   });
 });
-
 // @desc    Get current user
 // @route   GET /api/auth/me
 // @access  Private

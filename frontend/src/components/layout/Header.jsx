@@ -27,6 +27,10 @@ const Header = () => {
       <li>
         <Link to="/delivery-management">Management</Link>
       </li>
+      {/* ✅ ADD PROFILE LINK */}
+      <li>
+        <Link to="/profile">Profile</Link>
+      </li>
     </ul>
   );
 

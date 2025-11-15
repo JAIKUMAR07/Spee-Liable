@@ -91,3 +91,48 @@ export const getMe = asyncHandler(async (req, res, next) => {
     user: req.user,
   });
 });
+
+// In your auth controller updateProfile and changePassword functions
+
+// @desc    Update user profile
+// @route   PUT /api/auth/me
+// @access  Private
+export const updateProfile = asyncHandler(async (req, res, next) => {
+  const { name, email } = req.body;
+
+  const user = await User.findByIdAndUpdate(
+    req.user.id,
+    { name, email },
+    { new: true, runValidators: true }
+  );
+
+  res.json({
+    success: true,
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    },
+  });
+});
+
+export const changePassword = asyncHandler(async (req, res, next) => {
+  const { currentPassword, newPassword } = req.body;
+
+  const user = await User.findById(req.user.id).select("+password");
+
+  // Check current password
+  if (!(await user.comparePassword(currentPassword))) {
+    return next(new AppError("Current password is incorrect", 401));
+  }
+
+  // Update password
+  user.password = newPassword;
+  await user.save();
+
+  res.json({
+    success: true,
+    message: "Password updated successfully",
+  });
+});

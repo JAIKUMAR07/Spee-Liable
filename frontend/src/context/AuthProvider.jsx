@@ -7,14 +7,21 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(localStorage.getItem("token"));
 
+  // Add this function to update user data
+  const updateUser = (updatedUserData) => {
+    setUser((prevUser) => ({
+      ...prevUser,
+      ...updatedUserData,
+    }));
+  };
+
   // Check if user is authenticated on app start
   useEffect(() => {
     const checkAuth = async () => {
       const storedToken = localStorage.getItem("token");
       if (storedToken) {
         try {
-          // ✅ FIX: Remove the token parameter - interceptor handles it
-          const response = await authAPI.getMe(); // Remove storedToken parameter
+          const response = await authAPI.getMe();
           setUser(response.data.user);
           setToken(storedToken);
         } catch (error) {
@@ -28,7 +35,6 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, []);
 
-  // Login function
   // Login function
   const login = async (email, password) => {
     try {
@@ -97,7 +103,7 @@ export const AuthProvider = ({ children }) => {
         "manage_deliveries",
         "scan_qr",
         "optimize_routes",
-        "delete_records", // ✅ Can delete ANY records
+        "delete_records",
         "manage_users",
       ],
       manager: [
@@ -105,33 +111,29 @@ export const AuthProvider = ({ children }) => {
         "manage_deliveries",
         "scan_qr",
         "optimize_routes",
-        "delete_records", // ✅ Can delete ANY records
+        "delete_records",
       ],
       driver: [
         "view_deliveries",
-        "manage_deliveries", // ✅ Can manage their own deliveries
+        "manage_deliveries",
         "scan_qr",
         "optimize_routes",
-        "delete_own_records", // ✅ NEW: Can delete only their own records
+        "delete_own_records",
       ],
       viewer: ["view_deliveries"],
     };
     return permissions[user.role]?.includes(action) || false;
   };
 
-  // ✅ ADD THIS: Check if user can delete a specific record
+  // Check if user can delete a specific record
   const canDelete = (resource) => {
     if (!user) return false;
 
-    // Admin and manager can delete anything
     if (user.role === "admin" || user.role === "manager") {
       return true;
     }
 
-    // Drivers can only delete their own records
     if (user.role === "driver") {
-      // Check if the resource belongs to this user
-      // This assumes resource has createdBy or assignedTo field
       return (
         resource?.createdBy?.toString() === user.id ||
         resource?.assignedTo?.toString() === user.id
@@ -140,6 +142,7 @@ export const AuthProvider = ({ children }) => {
 
     return false;
   };
+
   const value = {
     user,
     token,
@@ -147,8 +150,10 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
+    updateUser, // Add updateUser to the context value
     hasRole,
     can,
+    canDelete,
     isAuthenticated: !!user,
   };
 

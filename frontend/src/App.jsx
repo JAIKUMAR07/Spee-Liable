@@ -9,7 +9,7 @@ import MapComponent from "./components/map/MapComponent";
 import DeliveryManagement from "./components/delivery_management/DeliveryManagement";
 import Login from "./components/auth/Login";
 import Register from "./components/auth/Register";
-
+import Profile from "./components/profile/Profile";
 function App() {
   return (
     <AuthProvider>
@@ -18,7 +18,15 @@ function App() {
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-
+          {/* {profile routes } */}
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
           {/* Protected Routes */}
           <Route
             path="/"
@@ -28,7 +36,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/qrpage"
             element={
@@ -37,7 +44,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/map"
             element={
@@ -46,7 +52,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/delivery-management"
             element={
@@ -55,7 +60,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           {/* Fallback route */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

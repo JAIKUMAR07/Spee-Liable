@@ -7,7 +7,6 @@ const ProfileForm = () => {
   const { loading, error, success, updateProfile, clearMessages } =
     useProfile();
 
-  // Initialize with empty strings to avoid uncontrolled->controlled warning
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -16,10 +15,15 @@ const ProfileForm = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Initialize form with user data
+  // Get user ID safely (now it will always work)
+  const getUserId = () => {
+    return user?.id || user?._id || "Not available";
+  };
 
+  // Initialize form with user data
   useEffect(() => {
     if (user && !isInitialized) {
+      console.log("🔄 Initializing form with user:", user);
       setFormData({
         name: user.name || "",
         email: user.email || "",
@@ -50,13 +54,22 @@ const ProfileForm = () => {
     }
 
     const result = await updateProfile(formData);
-    console.log("API Response:", result);
+    console.log("📨 API Response:", result);
+
     if (result.success) {
-      // Update global auth state while preserving existing fields (like id)
+      // Update global auth state
       if (typeof updateUser === "function") {
-        // Merge the existing user with the returned user data so fields such as id/_id aren't lost
-        const mergedUser = { ...(user || {}), ...(result.user || {}) };
-        updateUser(mergedUser);
+        console.log("🔄 Updating user context with:", result.user);
+
+        // Normalize the API response user data
+        const normalizedUser = {
+          ...result.user,
+          id: result.user?.id || result.user?._id,
+          _id: result.user?._id || result.user?.id,
+        };
+
+        console.log("✅ Normalized update user:", normalizedUser);
+        updateUser(normalizedUser);
       }
       setIsEditing(false);
       setTimeout(() => clearMessages(), 3000);
@@ -118,11 +131,12 @@ const ProfileForm = () => {
           </label>
           <input
             type="text"
-            value={user.id || ""}
+            value={getUserId()}
             disabled
             className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed text-sm font-mono"
           />
         </div>
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Full Name

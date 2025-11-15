@@ -16,13 +16,20 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Check if user is authenticated on app start
+  // Check if user is authenticated on app start
   useEffect(() => {
     const checkAuth = async () => {
       const storedToken = localStorage.getItem("token");
       if (storedToken) {
         try {
           const response = await authAPI.getMe();
-          setUser(response.data.user);
+          const userData = response.data.user;
+
+          // Normalize the user object to have both id and _id
+          const normalizedUser = normalizeUserObject(userData);
+
+          console.log("🔐 Normalized user:", normalizedUser);
+          setUser(normalizedUser);
           setToken(storedToken);
         } catch (error) {
           console.error("Auth check failed:", error);
@@ -34,7 +41,6 @@ export const AuthProvider = ({ children }) => {
 
     checkAuth();
   }, []);
-
   // Login function
   const login = async (email, password) => {
     try {
@@ -42,15 +48,19 @@ export const AuthProvider = ({ children }) => {
       const response = await authAPI.login({ email, password });
       console.log("📨 Login API response:", response);
 
-      const { user, token } = response.data;
-      console.log("👤 User data:", user);
+      const { user: userData, token } = response.data;
+
+      // Normalize the user object
+      const normalizedUser = normalizeUserObject(userData);
+
+      console.log("👤 Normalized user:", normalizedUser);
       console.log("🔑 Token received:", token ? "YES" : "NO");
 
       localStorage.setItem("token", token);
-      setUser(user);
+      setUser(normalizedUser);
       setToken(token);
 
-      return { success: true, user };
+      return { success: true, user: normalizedUser };
     } catch (error) {
       console.log("🚨 Login API error:", error);
       console.log("📊 Error response:", error.response);
@@ -62,17 +72,29 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Add this helper function to normalize user objects
+  const normalizeUserObject = (userData) => {
+    return {
+      ...userData,
+      id: userData.id || userData._id, // Ensure 'id' field exists
+      _id: userData._id || userData.id, // Ensure '_id' field exists
+    };
+  };
+  // Register function
   // Register function
   const register = async (userData) => {
     try {
       const response = await authAPI.register(userData);
-      const { user, token } = response.data;
+      const { user: userData, token } = response.data;
+
+      // Normalize the user object
+      const normalizedUser = normalizeUserObject(userData);
 
       localStorage.setItem("token", token);
-      setUser(user);
+      setUser(normalizedUser);
       setToken(token);
 
-      return { success: true, user };
+      return { success: true, user: normalizedUser };
     } catch (error) {
       return {
         success: false,
@@ -80,7 +102,6 @@ export const AuthProvider = ({ children }) => {
       };
     }
   };
-
   // Logout function
   const logout = () => {
     localStorage.removeItem("token");

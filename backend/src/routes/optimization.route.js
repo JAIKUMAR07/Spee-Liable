@@ -96,10 +96,15 @@ const optimizeRouteNearestNeighbor = (userLocation, markers) => {
 // Main 2-opt optimization function
 const optimizeRoute2Opt = (userLocation, markers) => {
   // Handle edge cases
-  if (!markers || markers.length === 0) return [];
-  if (markers.length === 1) return [markers[0]._id];
+  if (!markers || markers.length === 0) {
+    return {
+      optimizedOrder: [],
+      totalDistance: "0",
+      totalStops: 0,
+    };
+  }
 
-  // FIX: Use the same filtering logic as frontend
+  // ✅ FIXED: Use the same filtering logic as frontend
   const availableMarkers = markers.filter((marker) => {
     // Basic validation - marker exists and has position
     if (!marker || !marker.position || !Array.isArray(marker.position)) {
@@ -115,9 +120,22 @@ const optimizeRoute2Opt = (userLocation, markers) => {
     return isAvailable;
   });
 
-  // Handle edge cases for available markers
-  if (availableMarkers.length === 0) return [];
-  if (availableMarkers.length === 1) return [availableMarkers[0]._id];
+  // ✅ FIXED: Handle edge cases with proper return format
+  if (availableMarkers.length === 0) {
+    return {
+      optimizedOrder: [],
+      totalDistance: "0",
+      totalStops: 0,
+    };
+  }
+
+  if (availableMarkers.length === 1) {
+    return {
+      optimizedOrder: [availableMarkers[0]._id], // ✅ Always return array
+      totalDistance: "0",
+      totalStops: 1,
+    };
+  }
 
   console.log(
     `Optimizing route with ${availableMarkers.length} available markers`
@@ -191,6 +209,19 @@ router.post("/optimize-route", (req, res) => {
     const result = optimizeRoute2Opt(userLocation, markers);
 
     console.log("✅ Optimization result:", result);
+
+    // ✅ ADDED: Validate the result format
+    if (
+      !result ||
+      !result.optimizedOrder ||
+      !Array.isArray(result.optimizedOrder)
+    ) {
+      console.error("❌ Invalid optimization result format:", result);
+      return res.status(500).json({
+        success: false,
+        error: "Invalid optimization result format from server",
+      });
+    }
 
     res.json({
       success: true,

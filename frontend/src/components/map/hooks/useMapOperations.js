@@ -21,6 +21,78 @@ export const useMapOperations = () => {
   const watchIdRef = useRef(null);
   const socket = useSocket();
 
+  // ✅ NEW: Auto-optimize route when markers change
+  // ✅ UPDATED: Auto-optimize route when markers change with better error handling
+  const handleAutoOptimizeRoute = useCallback(async () => {
+    if (!userLocation || multipleMarkers.length === 0) {
+      console.log("🔄 Auto-optimize: Not enough markers or location data");
+      return;
+    }
+
+    // Don't auto-optimize if there's only 1 marker (no optimization needed)
+    if (multipleMarkers.length <= 1) {
+      console.log("🔄 Auto-optimize: Only one marker, no optimization needed");
+      setRouteOrder(multipleMarkers.map((marker) => marker._id));
+      return;
+    }
+
+    console.log("🔄 Auto-optimizing route due to marker changes...");
+    console.log("Current markers:", multipleMarkers.length);
+
+    try {
+      // ✅ Using API client for optimization
+      const response = await optimizationAPI.optimizeRoute({
+        userLocation: userLocation,
+        markers: multipleMarkers,
+      });
+
+      const data = response.data;
+      console.log("📥 Auto-optimization response:", data);
+
+      if (!data || !data.success) {
+        throw new Error(data?.error || "Auto-optimization failed");
+      }
+
+      // ✅ ADD SAFETY CHECK for optimizedOrder
+      if (
+        !data.data ||
+        !data.data.optimizedOrder ||
+        !Array.isArray(data.data.optimizedOrder)
+      ) {
+        console.warn(
+          "⚠️ Auto-optimization returned invalid optimizedOrder:",
+          data.data
+        );
+        throw new Error("Invalid auto-optimization result");
+      }
+
+      // Clear existing route
+      if (routingControlRef.current) {
+        mapRef.current?.removeControl(routingControlRef.current);
+        routingControlRef.current = null;
+      }
+
+      // Set the optimized route order from backend
+      setRouteOrder(data.data.optimizedOrder);
+      setIsRoutingActive(true);
+
+      console.log(
+        `✅ Route auto-optimized! ${data.data.optimizedOrder.length} stops, ${
+          data.data.totalDistance || "N/A"
+        } km`
+      );
+      console.log("Auto-optimized order:", data.data.optimizedOrder);
+    } catch (error) {
+      console.error("Auto-optimization error:", error);
+      // ✅ FALLBACK: Use simple order if auto-optimization fails
+      const fallbackOrder = multipleMarkers.map((marker) => marker._id);
+      setRouteOrder(fallbackOrder);
+      console.log(
+        "🔄 Auto-optimization failed, using fallback order:",
+        fallbackOrder
+      );
+    }
+  }, [userLocation, multipleMarkers, setRouteOrder, setIsRoutingActive]);
   // ✅ UPDATED: Use useCallback for fetchDeliveries to avoid circular dependency
   const fetchDeliveries = useCallback(async () => {
     try {
@@ -95,7 +167,29 @@ export const useMapOperations = () => {
     }
   }, []); // ✅ Empty dependency array since we're not using any external variables
 
-  // ✅ UPDATED: Real-time updates with proper dependencies
+  // ✅ NEW: Auto-optimize when markers change significantly
+  useEffect(() => {
+    // Only auto-optimize if we have a route active and markers changed
+    if (isRoutingActive && multipleMarkers.length > 0 && userLocation) {
+      console.log(
+        `🔄 Markers changed: ${multipleMarkers.length} markers, triggering auto-optimization`
+      );
+
+      // Use a small delay to avoid too many rapid optimizations
+      const optimizationTimer = setTimeout(() => {
+        handleAutoOptimizeRoute();
+      }, 1000); // 1 second delay
+
+      return () => clearTimeout(optimizationTimer);
+    }
+  }, [
+    multipleMarkers.length,
+    isRoutingActive,
+    userLocation,
+    handleAutoOptimizeRoute,
+  ]);
+
+  // ✅ UPDATED: Real-time updates with auto-optimization
   useEffect(() => {
     if (!socket) {
       console.log("Socket not available yet - skipping real-time setup");
@@ -117,12 +211,26 @@ export const useMapOperations = () => {
         console.log(
           `🗑️ Removed package ${data.packageId} from map (unavailable)`
         );
+
+        // ✅ TRIGGER AUTO-OPTIMIZATION when marker is removed
+        if (isRoutingActive) {
+          console.log("🔄 Triggering auto-optimization due to marker removal");
+          setTimeout(() => handleAutoOptimizeRoute(), 500);
+        }
       } else if (data.status === "available") {
         // Add or update marker if available - fetch fresh data
         console.log(
           `🔄 Package ${data.packageId} now available - refreshing data`
         );
-        fetchDeliveries(); // ✅ Now this works because fetchDeliveries is defined
+        fetchDeliveries().then(() => {
+          // ✅ TRIGGER AUTO-OPTIMIZATION after fetching new data
+          if (isRoutingActive) {
+            console.log(
+              "🔄 Triggering auto-optimization due to marker addition"
+            );
+            setTimeout(() => handleAutoOptimizeRoute(), 1000);
+          }
+        });
       }
     };
 
@@ -134,7 +242,14 @@ export const useMapOperations = () => {
         socket.off("package-status-changed", handlePackageStatusChanged);
       }
     };
-  }, [socket, setMultipleMarkers, setRouteOrder, fetchDeliveries]); // ✅ Now fetchDeliveries is stable
+  }, [
+    socket,
+    setMultipleMarkers,
+    setRouteOrder,
+    fetchDeliveries,
+    isRoutingActive,
+    handleAutoOptimizeRoute,
+  ]);
 
   // Load persisted state on component mount
   useEffect(() => {
@@ -386,6 +501,7 @@ export const useMapOperations = () => {
   };
 
   // ✅ UPDATED: Use API client for optimization
+  // ✅ UPDATED: Use API client for optimization with better error handling
   const handleOptimizeRoute = async () => {
     if (!userLocation || multipleMarkers.length === 0) {
       setError(
@@ -417,6 +533,16 @@ export const useMapOperations = () => {
         );
       }
 
+      // ✅ ADD SAFETY CHECK for optimizedOrder
+      if (
+        !data.data ||
+        !data.data.optimizedOrder ||
+        !Array.isArray(data.data.optimizedOrder)
+      ) {
+        console.warn("⚠️ Backend returned invalid optimizedOrder:", data.data);
+        throw new Error("Invalid optimization result from server");
+      }
+
       // Clear existing route
       if (routingControlRef.current) {
         mapRef.current?.removeControl(routingControlRef.current);
@@ -428,9 +554,9 @@ export const useMapOperations = () => {
       setIsRoutingActive(true);
 
       console.log(
-        `✅ Route optimized via backend! ${data.data.totalStops} stops, ${
-          data.data.totalDistance || "N/A"
-        } km`
+        `✅ Route optimized via backend! ${
+          data.data.optimizedOrder.length
+        } stops, ${data.data.totalDistance || "N/A"} km`
       );
       console.log("Optimized order:", data.data.optimizedOrder);
     } catch (error) {
@@ -440,6 +566,11 @@ export const useMapOperations = () => {
         "Failed to optimize route";
       console.error("Backend optimization error:", error);
       setError(`Failed to optimize route: ${errorMessage}`);
+
+      // ✅ FALLBACK: Use simple order if optimization fails
+      const fallbackOrder = multipleMarkers.map((marker) => marker._id);
+      setRouteOrder(fallbackOrder);
+      console.log("🔄 Using fallback route order:", fallbackOrder);
     } finally {
       setLoading(false);
     }
@@ -491,6 +622,7 @@ export const useMapOperations = () => {
     resetLocationPermission,
     fetchDeliveries,
     handleOptimizeRoute,
+    handleAutoOptimizeRoute, // ✅ ADD THIS
     handleReset,
     refreshDeliveries,
   };

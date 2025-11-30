@@ -6,10 +6,13 @@ const DeliveryMarkers = ({
   userLocation,
   searchLocation,
   multipleMarkers,
-  routeOrder,
+  routeOrder = [], // ✅ ADD DEFAULT VALUE
   onDeleteStop,
-  canManage = true, // ✅ New prop for permissions
+  canManage = true,
 }) => {
+  // ✅ ADD SAFETY CHECK
+  const safeRouteOrder = Array.isArray(routeOrder) ? routeOrder : [];
+
   return (
     <>
       {/* Driver's location */}
@@ -29,8 +32,9 @@ const DeliveryMarkers = ({
 
       {/* Delivery markers */}
       {multipleMarkers.map((marker, index) => {
-        const isOptimized = routeOrder.includes(marker._id);
-        const orderIndex = routeOrder.indexOf(marker._id) + 1;
+        // ✅ ADD SAFETY CHECK for routeOrder
+        const isOptimized = safeRouteOrder.includes(marker._id);
+        const orderIndex = safeRouteOrder.indexOf(marker._id) + 1;
         const displayNumber = isOptimized ? orderIndex : index + 1;
 
         return (

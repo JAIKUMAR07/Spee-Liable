@@ -98,6 +98,7 @@ const MapComponent = () => {
   }, [socket]);
 
   // ✅ UPDATED: Use API client and add permission check
+  // ✅ UPDATED: Use API client and add permission check with auto-optimization
   const handleDeleteStop = async (id, name) => {
     if (!can("manage_deliveries")) {
       alert("You don't have permission to mark deliveries as arrived");
@@ -116,6 +117,15 @@ const MapComponent = () => {
       setMultipleMarkers((prev) => prev.filter((marker) => marker._id !== id));
       setRouteOrder((prev) => prev.filter((markerId) => markerId !== id));
 
+      // ✅ TRIGGER AUTO-OPTIMIZATION after deleting marker
+      if (isRoutingActive) {
+        console.log("🔄 Triggering auto-optimization after deleting marker");
+        // Use setTimeout to ensure state updates complete first
+        setTimeout(() => {
+          handleOptimizeRoute(); // Use the existing optimize function
+        }, 500);
+      }
+
       alert(`"${name}" marked as arrived and removed successfully!`);
     } catch (error) {
       console.error("Error deleting stop:", error);
@@ -125,7 +135,6 @@ const MapComponent = () => {
       alert(errorMessage);
     }
   };
-
   const handleSearch = async () => {
     const locationName = searchInputRef.current.value.trim();
     if (!locationName) {
@@ -325,14 +334,14 @@ const MapComponent = () => {
                   !marker.available ||
                   marker.available === "unknown"
               )}
-              routeOrder={routeOrder}
+              routeOrder={routeOrder || []} // ✅ ADD SAFETY CHECK
               onDeleteStop={handleDeleteStop}
-              canManage={can("manage_deliveries")} // ✅ Pass permission to markers
+              canManage={can("manage_deliveries")}
             />
           </MapContainer>
 
           <RouteOrderPanel
-            routeOrder={routeOrder}
+            routeOrder={routeOrder || []} // ✅ ADD SAFETY CHECK
             multipleMarkers={multipleMarkers}
           />
         </div>

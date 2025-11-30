@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from "react";
 import Layout from "../layout/Layout";
 import { useAuth } from "../../context/AuthContext";
+
+import { useSocket } from "../../context/SocketContext";
 import { notificationAPI, customerAPI } from "../../utils/notificationAPI";
 
 const CustomerDashboard = () => {
   const { user } = useAuth();
+  const socket = useSocket(); // ADD THIS
   const [activeTab, setActiveTab] = useState("notifications");
   const [notifications, setNotifications] = useState([]);
   const [packages, setPackages] = useState([]);
@@ -39,16 +42,33 @@ const CustomerDashboard = () => {
   };
 
   // Update package status
+  // Update package status WITH REAL-TIME UPDATES
   const handleStatusUpdate = async (packageId, newStatus) => {
     try {
+      // Update on server
       await customerAPI.updatePackageAvailability(packageId, newStatus);
 
-      // Update local state
+      // Update local state optimistically
       setPackages((prev) =>
         prev.map((pkg) =>
           pkg._id === packageId ? { ...pkg, available: newStatus } : pkg
         )
       );
+
+      // ✅ EMIT SOCKET EVENT FOR REAL-TIME UPDATE
+      if (socket) {
+        socket.emit("package-status-updated", {
+          packageId,
+          status: newStatus,
+          customerId: user.id,
+          customerName: user.name,
+        });
+        console.log(
+          `📤 Emitted package status update: ${packageId} -> ${newStatus}`
+        );
+      } else {
+        console.warn("Socket not available for real-time update");
+      }
 
       alert(`Package marked as ${newStatus}`);
 
@@ -59,7 +79,6 @@ const CustomerDashboard = () => {
       alert("Failed to update package status");
     }
   };
-
   // Mark notification as read
   const handleMarkAsRead = async (notificationId) => {
     try {

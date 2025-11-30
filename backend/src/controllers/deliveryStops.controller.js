@@ -3,6 +3,7 @@ import Notification from "../models/notification.model.js";
 import User from "../models/user.model.js";
 import asyncHandler from "../middleware/asyncHandler.js";
 import AppError from "../utils/AppError.js";
+import { io } from "../../server.js"; // Import Socket.io instance
 
 // @desc    Get user's delivery stops
 // @route   GET /api/delivery-stops
@@ -241,10 +242,9 @@ export const updatePackageAvailability = asyncHandler(
       );
     }
 
-    const stop = await DeliveryStop.findById(id).populate(
-      "customer",
-      "name email"
-    );
+    const stop = await DeliveryStop.findById(id)
+      .populate("customer", "name email")
+      .populate("assignedTo", "name email");
     if (!stop) {
       return next(new AppError("Package not found", 404));
     }
@@ -256,7 +256,7 @@ export const updatePackageAvailability = asyncHandler(
     ) {
       return next(new AppError("Not authorized to update this package", 403));
     }
-
+    const oldStatus = stop.available;
     stop.available = available;
     const updatedStop = await stop.save();
 
@@ -271,6 +271,17 @@ export const updatePackageAvailability = asyncHandler(
       });
     }
 
+    // ✅ REAL-TIME UPDATE: Emit Socket.io event to all drivers
+    io.emit("package-status-changed", {
+      packageId: stop._id,
+      status: available,
+      name: stop.name,
+      address: stop.address,
+      location: stop.location,
+      assignedTo: stop.assignedTo?._id,
+      customer: stop.customer._id,
+      timestamp: new Date(),
+    });
     res.status(200).json({
       success: true,
       data: updatedStop,

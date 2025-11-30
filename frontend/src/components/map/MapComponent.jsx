@@ -6,6 +6,8 @@ import "leaflet-routing-machine";
 import { deliveryStopsAPI } from "../../utils/apiClient"; // ✅ Updated import
 import { useAuth } from "../../context/AuthContext"; // ✅ Add auth hook
 
+import { useSocket } from "../../context/SocketContext"; // ADD THIS
+
 import Layout from "../layout/Layout";
 import { useMapOperations } from "./hooks/useMapOperations";
 import { geocodeAddress } from "./utils/mapUtils";
@@ -45,15 +47,55 @@ const MapComponent = () => {
   } = useMapOperations();
 
   const { can } = useAuth(); // ✅ Get permission checks
-
+  const socket = useSocket(); // ADD THIS
   const [showModal, setShowModal] = React.useState(false);
   const [deleting, setDeleting] = React.useState(false);
   const [addingMarker, setAddingMarker] = React.useState(false);
+
+  // ✅ REAL-TIME UPDATES: Listen for package status changes
+  useEffect(() => {
+    if (!socket) return;
+
+    const handlePackageStatusChanged = (data) => {
+      console.log("Real-time package update received:", data);
+
+      // Update markers based on status change
+      if (data.status === "unavailable") {
+        // Remove marker from map if unavailable
+        setMultipleMarkers((prev) =>
+          prev.filter((marker) => marker._id !== data.packageId)
+        );
+        // Also remove from route order if it's there
+        setRouteOrder((prev) => prev.filter((id) => id !== data.packageId));
+      } else if (data.status === "available") {
+        // Add or update marker if available
+        // We need to fetch the updated package data
+        fetchDeliveries();
+      }
+
+      // Show notification to driver
+    };
+
+    socket.on("package-status-changed", handlePackageStatusChanged);
+
+    // Cleanup
+    return () => {
+      socket.off("package-status-changed", handlePackageStatusChanged);
+    };
+  }, [socket, setMultipleMarkers, setRouteOrder, fetchDeliveries]);
 
   useEffect(() => {
     fetchDeliveries();
     getCurrentLocation();
   }, []);
+  // ✅ Socket connection status indicator
+  useEffect(() => {
+    if (socket) {
+      console.log("✅ Socket is available in MapComponent");
+    } else {
+      console.log("⏳ Socket not available yet in MapComponent");
+    }
+  }, [socket]);
 
   // ✅ UPDATED: Use API client and add permission check
   const handleDeleteStop = async (id, name) => {

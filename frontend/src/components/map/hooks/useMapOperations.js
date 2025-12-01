@@ -167,6 +167,34 @@ export const useMapOperations = () => {
     }
   }, []); // ✅ Empty dependency array since we're not using any external variables
 
+  // ✅ NEW: Auto-clear route when no markers are available
+  useEffect(() => {
+    // If route is active but no available markers, clear the route
+    if (isRoutingActive && multipleMarkers.length === 0) {
+      console.log("🔄 No available markers - clearing route");
+
+      // Clear the route from map
+      if (routingControlRef.current) {
+        mapRef.current?.removeControl(routingControlRef.current);
+        routingControlRef.current = null;
+      }
+
+      // Clear route order and deactivate routing
+      setRouteOrder([]);
+      setIsRoutingActive(false);
+
+      // Clear persisted data
+      localStorage.removeItem("deliveryRouteOrder");
+      localStorage.removeItem("deliveryIsRoutingActive");
+
+      console.log("✅ Route cleared - no markers available");
+    }
+  }, [
+    multipleMarkers.length,
+    isRoutingActive,
+    setRouteOrder,
+    setIsRoutingActive,
+  ]);
   // ✅ NEW: Auto-optimize when markers change significantly
   useEffect(() => {
     // Only auto-optimize if we have a route active and markers changed
@@ -190,6 +218,7 @@ export const useMapOperations = () => {
   ]);
 
   // ✅ UPDATED: Real-time updates with auto-optimization
+  // ✅ UPDATED: Real-time updates with auto-optimization
   useEffect(() => {
     if (!socket) {
       console.log("Socket not available yet - skipping real-time setup");
@@ -212,11 +241,35 @@ export const useMapOperations = () => {
           `🗑️ Removed package ${data.packageId} from map (unavailable)`
         );
 
-        // ✅ TRIGGER AUTO-OPTIMIZATION when marker is removed
-        if (isRoutingActive) {
-          console.log("🔄 Triggering auto-optimization due to marker removal");
-          setTimeout(() => handleAutoOptimizeRoute(), 500);
-        }
+        // ✅ CHECK IF NO MARKERS LEFT - CLEAR ROUTE
+        setTimeout(() => {
+          const updatedMarkers = multipleMarkers.filter(
+            (marker) => marker._id !== data.packageId
+          );
+          if (updatedMarkers.length === 0 && isRoutingActive) {
+            console.log("🔄 All markers removed - clearing route");
+
+            // Clear the route from map
+            if (routingControlRef.current) {
+              mapRef.current?.removeControl(routingControlRef.current);
+              routingControlRef.current = null;
+            }
+
+            setRouteOrder([]);
+            setIsRoutingActive(false);
+
+            // Clear persisted data
+            localStorage.removeItem("deliveryRouteOrder");
+            localStorage.removeItem("deliveryIsRoutingActive");
+          }
+          // ✅ TRIGGER AUTO-OPTIMIZATION when marker is removed (if markers still exist)
+          else if (isRoutingActive && updatedMarkers.length > 0) {
+            console.log(
+              "🔄 Triggering auto-optimization due to marker removal"
+            );
+            handleAutoOptimizeRoute();
+          }
+        }, 100);
       } else if (data.status === "available") {
         // Add or update marker if available - fetch fresh data
         console.log(
@@ -249,8 +302,8 @@ export const useMapOperations = () => {
     fetchDeliveries,
     isRoutingActive,
     handleAutoOptimizeRoute,
+    multipleMarkers,
   ]);
-
   // Load persisted state on component mount
   useEffect(() => {
     const persistedRouteOrder = localStorage.getItem("deliveryRouteOrder");
@@ -597,6 +650,7 @@ export const useMapOperations = () => {
       navigator.geolocation.clearWatch(watchIdRef.current);
       watchIdRef.current = null;
     }
+    console.log("✅ Complete reset - markers, route, and path cleared");
   };
 
   return {

@@ -21,8 +21,8 @@ export const SocketProvider = ({ children }) => {
     if (isAuthenticated && user) {
       console.log("🔄 Initializing Socket.io connection...");
 
-      // ✅ FIX: Use Vite environment variable or fallback
-      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+      // Use Vite env var if provided; otherwise use current origin (works when frontend and API share origin)
+      const API_URL = import.meta.env.VITE_API_URL || window.location.origin;
       console.log("🔗 Connecting to:", API_URL);
 
       // Connect to Socket.io server

@@ -20,12 +20,22 @@ app.use(express.json());
 app.use("/api/optimization", optimizationRouter);
 
 // MongoDB Connection
+// Show which URI type we're about to use (don't print credentials)
+if (process.env.MONGO_URI) {
+  const isAtlas = process.env.MONGO_URI.startsWith("mongodb+srv:");
+  console.log(`Using MONGO_URI (Atlas?): ${isAtlas}`);
+} else {
+  console.log("MONGO_URI is not set in environment variables");
+}
+
 mongoose
   .connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
-  .then(() => console.log("MongoDB connection established successfully!"))
+  .then((conn) =>
+    console.log(`MongoDB connected to host: ${conn.connection.host}`)
+  )
   .catch((error) => console.error("MongoDB connection failed:", error.message));
 
 // Routes

@@ -4,14 +4,16 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "build": "npm install --legacy-peer-deps"
   },
   "author": "",
   "license": "ISC",
   "description": "",
   "engines": {
-    "node": "18.x"
+    "node": ">=20.14.0",
+    "npm": ">=8.0.0"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

@@ -17,7 +17,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use("/api/optimization", optimizationRouter);
+// Require MONGO_URI in production to avoid accidentally using a local DB
+if (process.env.NODE_ENV === "production" && !process.env.MONGO_URI) {
+  console.error(
+    "MONGO_URI is not set. Set MONGO_URI in your deployment environment variables."
+  );
+  process.exit(1);
+}
 
 // MongoDB Connection
 // Show which URI type we're about to use (don't print credentials)

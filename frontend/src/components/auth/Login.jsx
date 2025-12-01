@@ -176,9 +176,7 @@ const Login = () => {
 
             <div className="mt-3 grid grid-cols-2 gap-3">
               <button
-                onClick={() =>
-                  fillDemoAccount("admin@speeliable.com", "admin123")
-                }
+                onClick={() => fillDemoAccount("admin@gmail.com", "admin123")}
                 className="text-xs text-center p-2 bg-purple-100 hover:bg-purple-200 rounded border border-purple-300 transition-colors cursor-pointer"
               >
                 <strong className="text-purple-800">Admin</strong>
@@ -189,9 +187,7 @@ const Login = () => {
               </button>
 
               <button
-                onClick={() =>
-                  fillDemoAccount("driver@speeliable.com", "driver123")
-                }
+                onClick={() => fillDemoAccount("driver@gmail.com", "driver123")}
                 className="text-xs text-center p-2 bg-green-100 hover:bg-green-200 rounded border border-green-300 transition-colors cursor-pointer"
               >
                 <strong className="text-green-800">Driver</strong>
@@ -205,7 +201,7 @@ const Login = () => {
             <div className="mt-2 grid grid-cols-2 gap-3">
               <button
                 onClick={() =>
-                  fillDemoAccount("manager@speeliable.com", "manager123")
+                  fillDemoAccount("customer@gmail.com", "customer123")
                 }
                 className="text-xs text-center p-2 bg-blue-100 hover:bg-blue-200 rounded border border-blue-300 transition-colors cursor-pointer"
               >

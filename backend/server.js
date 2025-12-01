@@ -13,7 +13,7 @@ const httpServer = createServer(app);
 // Initialize Socket.io with CORS
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:5173", // ✅ Correct port
+    origin: process.env.CLIENT_URL || "http://localhost:5173", // ✅ Vite default port
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -21,36 +21,45 @@ const io = new Server(httpServer, {
 
 // Socket.io connection handling
 io.on("connection", (socket) => {
-  console.log(`User connected: ${socket.id}`);
+  console.log(`✅ User connected: ${socket.id}`);
 
   // Join driver to drivers room
   socket.on("join-driver-room", (driverId) => {
     socket.join(`driver:${driverId}`);
     socket.join("drivers"); // Global drivers room
-    console.log(`Driver ${driverId} joined their room`);
+    console.log(`🚚 Driver ${driverId} joined room`);
   });
 
   // Join customer to their room
   socket.on("join-customer-room", (customerId) => {
     socket.join(`customer:${customerId}`);
-    console.log(`Customer ${customerId} joined their room`);
+    console.log(`📦 Customer ${customerId} joined room`);
   });
 
-  // Handle package status updates
+  // Handle package status updates from customers
   socket.on("package-status-updated", (data) => {
+    console.log(
+      `📦 Package status update: ${data.packageId} -> ${data.status}`
+    );
+
     // Broadcast to all drivers that package status changed
-    io.to("drivers").emit("package-status-changed", data);
-    console.log(`Package ${data.packageId} status updated to ${data.status}`);
+    io.to("drivers").emit("package-status-changed", {
+      packageId: data.packageId,
+      status: data.status,
+      name: data.customerName || "Customer",
+      timestamp: new Date(),
+    });
   });
 
   // Handle disconnection
   socket.on("disconnect", () => {
-    console.log(`User disconnected: ${socket.id}`);
+    console.log(`❌ User disconnected: ${socket.id}`);
   });
 });
 
 httpServer.listen(port, () => {
-  console.log(`Server is running on port: ${port}`);
+  console.log(`🚀 Server is running on port: ${port}`);
+  console.log(`🔗 Socket.io enabled for real-time updates`);
 });
 
 export { io };

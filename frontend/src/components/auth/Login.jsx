@@ -183,7 +183,7 @@ const Login = () => {
               >
                 <strong className="text-purple-800">Admin</strong>
                 <br />
-                <span className="text-purple-600">admin@speeliable.com</span>
+                <span className="text-purple-600">admin@gmail.com</span>
                 <br />
                 <span className="text-purple-500">admin123</span>
               </button>
@@ -196,7 +196,7 @@ const Login = () => {
               >
                 <strong className="text-green-800">Driver</strong>
                 <br />
-                <span className="text-green-600">driver@speeliable.com</span>
+                <span className="text-green-600">driver@gmail.com</span>
                 <br />
                 <span className="text-green-500">driver123</span>
               </button>
@@ -209,24 +209,11 @@ const Login = () => {
                 }
                 className="text-xs text-center p-2 bg-blue-100 hover:bg-blue-200 rounded border border-blue-300 transition-colors cursor-pointer"
               >
-                <strong className="text-blue-800">Manager</strong>
+                <strong className="text-blue-800">Customer</strong>
                 <br />
-                <span className="text-blue-600">manager@speeliable.com</span>
+                <span className="text-blue-600">customer@gmail.com</span>
                 <br />
-                <span className="text-blue-500">manager123</span>
-              </button>
-
-              <button
-                onClick={() =>
-                  fillDemoAccount("viewer@speeliable.com", "viewer123")
-                }
-                className="text-xs text-center p-2 bg-gray-100 hover:bg-gray-200 rounded border border-gray-300 transition-colors cursor-pointer"
-              >
-                <strong className="text-gray-800">Viewer</strong>
-                <br />
-                <span className="text-gray-600">viewer@speeliable.com</span>
-                <br />
-                <span className="text-gray-500">viewer123</span>
+                <span className="text-blue-500">customer123</span>
               </button>
             </div>
           </div>

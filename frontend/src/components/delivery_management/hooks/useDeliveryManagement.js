@@ -1,20 +1,17 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
-
-const API_BASE_URL = "http://localhost:5000/api";
+import { deliveryStopsAPI } from "../../../utils/apiClient"; // ✅ Correct import
 
 export const useDeliveryManagement = () => {
   const [deliveries, setDeliveries] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Fetch all deliveries - FIXED
+  // Fetch all deliveries - UPDATED with proper error handling
   const fetchDeliveries = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_BASE_URL}/delivery-stops`);
+      const response = await deliveryStopsAPI.getAll(); // ✅ Using API client
 
-      // FIX: Your backend returns { success: true, data: [], count: 0 }
       const apiResponse = response.data;
 
       if (apiResponse.success) {
@@ -24,15 +21,17 @@ export const useDeliveryManagement = () => {
       }
       setError(null);
     } catch (err) {
-      setError("Failed to fetch deliveries");
+      const errorMessage =
+        err.response?.data?.error || "Failed to fetch deliveries";
+      setError(errorMessage);
       console.error("Fetch error:", err);
-      setDeliveries([]); // Ensure deliveries is always an array
+      setDeliveries([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Toggle availability status - FIXED
+  // Toggle availability status - UPDATED to use API client
   const toggleAvailability = async (id, currentStatus) => {
     try {
       const newStatus =
@@ -40,14 +39,11 @@ export const useDeliveryManagement = () => {
 
       console.log(`Updating delivery ${id} to ${newStatus}`);
 
-      const response = await axios.patch(
-        `${API_BASE_URL}/delivery-stops/${id}`,
-        {
-          available: newStatus,
-        }
-      );
+      // ✅ Using API client instead of direct axios
+      const response = await deliveryStopsAPI.update(id, {
+        available: newStatus,
+      });
 
-      // FIX: Your backend returns { success: true, data: {...} }
       const apiResponse = response.data;
 
       if (apiResponse.success) {
@@ -65,33 +61,34 @@ export const useDeliveryManagement = () => {
         throw new Error(apiResponse.error || "Failed to update delivery");
       }
     } catch (err) {
-      console.error("Update error:", err.response?.data || err.message);
-      setError(
-        `Failed to update delivery status: ${
-          err.response?.data?.error || err.message
-        }`
-      );
+      const errorMessage =
+        err.response?.data?.error ||
+        err.message ||
+        "Failed to update delivery status";
+      setError(errorMessage);
+      console.error("Update error:", err);
       throw err;
     }
   };
 
-  // Delete delivery permanently - FIXED
+  // Delete delivery permanently - UPDATED to use API client
   const deleteDelivery = async (id) => {
     try {
-      const response = await axios.delete(
-        `${API_BASE_URL}/delivery-stops/${id}`
-      );
+      // ✅ Using API client instead of direct axios
+      const response = await deliveryStopsAPI.delete(id);
 
-      // FIX: Your backend returns { success: true, message: '...' }
       const apiResponse = response.data;
 
       if (apiResponse.success) {
         setDeliveries((prev) => prev.filter((delivery) => delivery._id !== id));
+        setError(null);
       } else {
         throw new Error(apiResponse.error || "Failed to delete delivery");
       }
     } catch (err) {
-      setError("Failed to delete delivery");
+      const errorMessage =
+        err.response?.data?.error || err.message || "Failed to delete delivery";
+      setError(errorMessage);
       throw err;
     }
   };

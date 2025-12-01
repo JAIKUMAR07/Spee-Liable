@@ -1,7 +1,18 @@
 import React from "react";
 
-const DeliveryCard = ({ delivery, onToggleAvailability, onDelete }) => {
+const DeliveryCard = ({
+  delivery,
+  onToggleAvailability,
+  onDelete,
+  canManage = true, // ✅ Default to true for backward compatibility
+  canDelete = false, // ✅ Default to false for security
+}) => {
   const handleToggle = async () => {
+    if (!canManage) {
+      alert("You don't have permission to manage delivery status");
+      return;
+    }
+
     try {
       await onToggleAvailability(delivery._id, delivery.available);
     } catch (error) {
@@ -10,6 +21,11 @@ const DeliveryCard = ({ delivery, onToggleAvailability, onDelete }) => {
   };
 
   const handleDelete = () => {
+    if (!canDelete) {
+      alert("You don't have permission to delete delivery stops");
+      return;
+    }
+
     if (window.confirm(`Are you sure you want to delete "${delivery.name}"?`)) {
       onDelete(delivery._id);
     }
@@ -58,33 +74,43 @@ const DeliveryCard = ({ delivery, onToggleAvailability, onDelete }) => {
         )}
       </div>
 
-      {/* Action Buttons */}
+      {/* Action Buttons - Conditionally rendered based on permissions */}
       <div className="flex justify-between items-center space-x-2">
         <button
           onClick={handleToggle}
+          disabled={!canManage} // ✅ Disable if no permission
           className={`flex-1 py-2 px-4 rounded-lg font-semibold transition ${
             delivery.available === "available"
               ? "bg-red-500 hover:bg-red-600 text-white"
               : "bg-green-500 hover:bg-green-600 text-white"
-          }`}
+          } ${!canManage ? "opacity-50 cursor-not-allowed" : ""}`}
         >
           {delivery.available === "available"
             ? "Mark Unavailable"
             : "Mark Available"}
         </button>
 
-        <button
-          onClick={handleDelete}
-          className="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg font-semibold transition"
-        >
-          🗑️ Delete
-        </button>
+        {canDelete && ( // ✅ Only show delete button if user has permission
+          <button
+            onClick={handleDelete}
+            className="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg font-semibold transition"
+          >
+            🗑️ Delete
+          </button>
+        )}
       </div>
 
       {/* Status Message */}
       {delivery.available === "unavailable" && (
         <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
           ⚠️ This stop will be excluded from route optimization
+        </div>
+      )}
+
+      {/* Permission Notice for Viewers */}
+      {!canManage && (
+        <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-blue-700 text-sm">
+          👀 View only - Contact admin for changes
         </div>
       )}
     </div>

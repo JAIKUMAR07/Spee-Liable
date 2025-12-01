@@ -8,7 +8,7 @@ const AutoCenterOnLocation = ({ location }) => {
   useEffect(() => {
     if (location && map) {
       // smooth transition to new location wehn user location changes
-      map.flyTo(location, 15);
+      map.flyTo(location, 7);
     }
   }, [location, map]); // dependent variable
 

@@ -179,7 +179,7 @@ export const deleteDeliveryStop = asyncHandler(async (req, res, next) => {
   const canDelete =
     // Admin/manager can delete anything
     req.user.role === "admin" ||
-    req.user.role === "manager" ||
+    req.user.role === "driver" ||
     // Driver can delete stops assigned to them
     stop.assignedTo.toString() === req.user.id;
 

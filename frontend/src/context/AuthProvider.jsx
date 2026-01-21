@@ -144,7 +144,7 @@ export const AuthProvider = ({ children }) => {
   const canDelete = (resource) => {
     if (!user) return false;
 
-    if (user.role === "admin" || user.role === "manager") {
+    if (user.role === "admin") {
       return true;
     }
 

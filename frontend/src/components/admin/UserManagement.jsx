@@ -43,14 +43,14 @@ const UserManagement = () => {
   const handleRoleChange = (userId, newRole) => {
     // TODO: Update user role via API
     setUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
+      prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u)),
     );
   };
 
   const handleStatusChange = (userId, isActive) => {
     // TODO: Update user status via API
     setUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, isActive } : u))
+      prev.map((u) => (u.id === userId ? { ...u, isActive } : u)),
     );
   };
 
@@ -133,8 +133,8 @@ const UserManagement = () => {
                               userItem.role === "admin"
                                 ? "bg-purple-100 text-purple-800"
                                 : userItem.role === "driver"
-                                ? "bg-green-100 text-green-800"
-                                : "bg-blue-100 text-blue-800"
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-blue-100 text-blue-800"
                             }`}
                           >
                             {userItem.role}

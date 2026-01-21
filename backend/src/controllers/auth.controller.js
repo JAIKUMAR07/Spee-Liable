@@ -83,6 +83,7 @@ export const register = asyncHandler(async (req, res, next) => {
     token,
   });
 });
+
 // @desc    Get current user
 // @route   GET /api/auth/me
 // @access  Private

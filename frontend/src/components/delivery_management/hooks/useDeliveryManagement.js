@@ -52,8 +52,8 @@ export const useDeliveryManagement = () => {
           prev.map((delivery) =>
             delivery._id === id
               ? { ...delivery, available: newStatus }
-              : delivery
-          )
+              : delivery,
+          ),
         );
         console.log(`Successfully updated to ${newStatus}`);
         return apiResponse.data;

@@ -206,7 +206,7 @@ export const useMapOperations = () => {
       // Use a small delay to avoid too many rapid optimizations
       const optimizationTimer = setTimeout(() => {
         handleAutoOptimizeRoute();
-      }, 1000); // 1 second delay
+      }); // 1 second delay
 
       return () => clearTimeout(optimizationTimer);
     }

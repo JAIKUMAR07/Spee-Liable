@@ -85,10 +85,10 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       const response = await authAPI.register(userData);
-      const { user: userData, token } = response.data;
+      const { user: responseUser, token } = response.data;
 
       // Normalize the user object
-      const normalizedUser = normalizeUserObject(userData);
+      const normalizedUser = normalizeUserObject(responseUser);
 
       localStorage.setItem("token", token);
       setUser(normalizedUser);

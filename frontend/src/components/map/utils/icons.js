@@ -64,3 +64,42 @@ export const createBlueNumberedIcon = (number) => {
     popupAnchor: [1, -34],
   });
 };
+
+// orange numbered icon for personal stops
+export const createOrangeNumberedIcon = (number) => {
+  return new L.DivIcon({
+    className: "custom-div-icon",
+    html: `
+      <div style="position: relative; width: 30px; height: 41px;">
+        <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png" style="width: 30px; height: 41px;" />
+        <div style="
+          position: absolute; 
+          top: 3px; 
+          left: 0; 
+          width: 30px; 
+          text-align: center; 
+          color: white; 
+          font-weight: 900; 
+          font-size: 16px; 
+          text-shadow: 
+            1px 1px 3px #000000,
+            -1px -1px 3px #000000,
+            1px -1px 3px #000000,
+            -1px 1px 3px #000000,
+            0px 0px 4px #000000;
+          background: rgba(0, 0, 0, 0.4);
+          border-radius: 50%;
+          width: 22px;
+          height: 22px;
+          line-height: 22px;
+          margin-left: 4px;
+          box-shadow: 0 0 5px rgba(255, 255, 255, 0.7);
+        ">
+          ${number}
+        </div>
+      </div>`,
+    iconSize: [30, 41],
+    iconAnchor: [15, 41],
+    popupAnchor: [1, -34],
+  });
+};

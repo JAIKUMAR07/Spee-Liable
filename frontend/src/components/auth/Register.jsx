@@ -123,7 +123,7 @@ const Register = () => {
                 Role
               </label>
               <div className="mt-1">
-                // In the role select field, update options:
+                {/* // In the role select field, update options: */}
                 <select
                   id="role"
                   name="role"

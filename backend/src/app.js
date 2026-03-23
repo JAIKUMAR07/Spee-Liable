@@ -9,6 +9,7 @@ import optimizationRouter from "./routes/optimization.route.js"; // ADD THIS
 import notificationRouter from "./routes/notifications.route.js";
 import authRouter from "./routes/auth.route.js";
 import userRouter from "./routes/users.route.js"; // NEW
+import personalStopsRouter from "./routes/personalStops.route.js"; // NEW PERSONAL STOPS
 dotenv.config();
 
 const app = express();
@@ -51,6 +52,7 @@ app.use("/api/users", userRouter); // NEW
 app.use("/api/delivery-stops", deliveryStopsRouter);
 app.use("/api/delivery-marks", deliveryMarksMapRouter);
 app.use("/api/optimization", optimizationRouter); // ADD THIS LINE
+app.use("/api/personal-stops", personalStopsRouter); // ADD PERSONAL STOPS ROUTE
 // Basic route to test if server is running
 app.use("/api/notifications", notificationRouter); // ADD THIS
 app.get("/", (req, res) => {

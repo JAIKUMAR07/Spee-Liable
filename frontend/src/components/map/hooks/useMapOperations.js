@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import L from "leaflet";
-import { deliveryStopsAPI, optimizationAPI } from "../../../utils/apiClient";
+import { deliveryStopsAPI, optimizationAPI, personalStopsAPI } from "../../../utils/apiClient";
 import { useSocket } from "../../../context/SocketContext";
 
 export const useMapOperations = () => {
@@ -61,7 +61,7 @@ export const useMapOperations = () => {
       ) {
         console.warn(
           "⚠️ Auto-optimization returned invalid optimizedOrder:",
-          data.data
+          data.data,
         );
         throw new Error("Invalid auto-optimization result");
       }
@@ -79,7 +79,7 @@ export const useMapOperations = () => {
       console.log(
         `✅ Route auto-optimized! ${data.data.optimizedOrder.length} stops, ${
           data.data.totalDistance || "N/A"
-        } km`
+        } km`,
       );
       console.log("Auto-optimized order:", data.data.optimizedOrder);
     } catch (error) {
@@ -89,7 +89,7 @@ export const useMapOperations = () => {
       setRouteOrder(fallbackOrder);
       console.log(
         "🔄 Auto-optimization failed, using fallback order:",
-        fallbackOrder
+        fallbackOrder,
       );
     }
   }, [userLocation, multipleMarkers, setRouteOrder, setIsRoutingActive]);
@@ -97,7 +97,13 @@ export const useMapOperations = () => {
   const fetchDeliveries = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await deliveryStopsAPI.getAll();
+      const [response, personalResponse] = await Promise.all([
+        deliveryStopsAPI.getAll(),
+        personalStopsAPI.getAll().catch((err) => {
+          console.error("Failed to fetch personal stops", err);
+          return { data: { data: [] } };
+        })
+      ]);
 
       let deliveryData = response.data;
       if (
@@ -113,7 +119,7 @@ export const useMapOperations = () => {
         (delivery) =>
           delivery.available === "available" ||
           !delivery.available ||
-          delivery.available === "unknown"
+          delivery.available === "unknown",
       );
 
       const updatedMarkers = [];
@@ -153,6 +159,54 @@ export const useMapOperations = () => {
           }
         } catch (deliveryError) {
           console.error("Failed to process delivery:", delivery, deliveryError);
+        }
+      }
+
+      let personalData = personalResponse.data;
+      if (
+        personalData &&
+        personalData.data &&
+        Array.isArray(personalData.data)
+      ) {
+        personalData = personalData.data;
+      } else if (Array.isArray(personalData)) {
+        personalData = personalData;
+      } else {
+        personalData = [];
+      }
+
+      for (const stop of personalData) {
+        try {
+          let coordinates;
+
+          if (
+            stop.location &&
+            stop.location.lat !== undefined &&
+            stop.location.lng !== undefined
+          ) {
+            coordinates = [stop.location.lat, stop.location.lng];
+          } else if (stop.address) {
+            coordinates = await geocodeAddress(stop.address);
+          } else {
+            coordinates = [20.5937, 78.9629];
+          }
+
+          if (coordinates) {
+            updatedMarkers.push({
+              _id: stop._id,
+              name: stop.name || "Personal Stop",
+              reason: stop.reason,
+              address: stop.address,
+              phone_num: "N/A",
+              pincode: "N/A",
+              position: coordinates,
+              available: "available", // Always make personal stops visible
+              isPersonal: true,
+              wasGeocoded: !stop.location,
+            });
+          }
+        } catch (stopError) {
+          console.error("Failed to process personal stop:", stop, stopError);
         }
       }
 
@@ -200,7 +254,7 @@ export const useMapOperations = () => {
     // Only auto-optimize if we have a route active and markers changed
     if (isRoutingActive && multipleMarkers.length > 0 && userLocation) {
       console.log(
-        `🔄 Markers changed: ${multipleMarkers.length} markers, triggering auto-optimization`
+        `🔄 Markers changed: ${multipleMarkers.length} markers, triggering auto-optimization`,
       );
 
       // Use a small delay to avoid too many rapid optimizations
@@ -232,19 +286,19 @@ export const useMapOperations = () => {
       if (data.status === "unavailable") {
         // Remove marker from map if unavailable
         setMultipleMarkers((prev) =>
-          prev.filter((marker) => marker._id !== data.packageId)
+          prev.filter((marker) => marker._id !== data.packageId),
         );
         // Also remove from route order if it's there
         setRouteOrder((prev) => prev.filter((id) => id !== data.packageId));
 
         console.log(
-          `🗑️ Removed package ${data.packageId} from map (unavailable)`
+          `🗑️ Removed package ${data.packageId} from map (unavailable)`,
         );
 
         // ✅ CHECK IF NO MARKERS LEFT - CLEAR ROUTE
         setTimeout(() => {
           const updatedMarkers = multipleMarkers.filter(
-            (marker) => marker._id !== data.packageId
+            (marker) => marker._id !== data.packageId,
           );
           if (updatedMarkers.length === 0 && isRoutingActive) {
             console.log("🔄 All markers removed - clearing route");
@@ -265,7 +319,7 @@ export const useMapOperations = () => {
           // ✅ TRIGGER AUTO-OPTIMIZATION when marker is removed (if markers still exist)
           else if (isRoutingActive && updatedMarkers.length > 0) {
             console.log(
-              "🔄 Triggering auto-optimization due to marker removal"
+              "🔄 Triggering auto-optimization due to marker removal",
             );
             handleAutoOptimizeRoute();
           }
@@ -273,13 +327,13 @@ export const useMapOperations = () => {
       } else if (data.status === "available") {
         // Add or update marker if available - fetch fresh data
         console.log(
-          `🔄 Package ${data.packageId} now available - refreshing data`
+          `🔄 Package ${data.packageId} now available - refreshing data`,
         );
         fetchDeliveries().then(() => {
           // ✅ TRIGGER AUTO-OPTIMIZATION after fetching new data
           if (isRoutingActive) {
             console.log(
-              "🔄 Triggering auto-optimization due to marker addition"
+              "🔄 Triggering auto-optimization due to marker addition",
             );
             setTimeout(() => handleAutoOptimizeRoute(), 1000);
           }
@@ -308,7 +362,7 @@ export const useMapOperations = () => {
   useEffect(() => {
     const persistedRouteOrder = localStorage.getItem("deliveryRouteOrder");
     const persistedIsRoutingActive = localStorage.getItem(
-      "deliveryIsRoutingActive"
+      "deliveryIsRoutingActive",
     );
 
     if (persistedRouteOrder) {
@@ -325,7 +379,7 @@ export const useMapOperations = () => {
       localStorage.setItem("deliveryRouteOrder", JSON.stringify(routeOrder));
       localStorage.setItem(
         "deliveryIsRoutingActive",
-        JSON.stringify(isRoutingActive)
+        JSON.stringify(isRoutingActive),
       );
     }
   }, [routeOrder, isRoutingActive]);
@@ -344,8 +398,8 @@ export const useMapOperations = () => {
     try {
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-          address
-        )}`
+          address,
+        )}`,
       );
       const data = await response.json();
 
@@ -383,7 +437,7 @@ export const useMapOperations = () => {
 
     if (orderedMarkers.length === 0 || !userLocation) {
       console.log(
-        "No valid markers found for persisted route or no user location"
+        "No valid markers found for persisted route or no user location",
       );
       return;
     }
@@ -405,12 +459,12 @@ export const useMapOperations = () => {
         if (routes.length === 0) return;
 
         const totalDistance = (routes[0].summary.totalDistance / 1000).toFixed(
-          1
+          1,
         );
         const totalTime = Math.round(routes[0].summary.totalTime / 60);
 
         console.log(
-          `Route recreated! Total: ${totalDistance} km, ~${totalTime} min`
+          `Route recreated! Total: ${totalDistance} km, ~${totalTime} min`,
         );
       })
       .addTo(mapRef.current);
@@ -427,7 +481,7 @@ export const useMapOperations = () => {
     // Check if permission was previously denied
     if (locationPermissionDenied) {
       setError(
-        "Location permission was denied. Please enable it in your browser settings."
+        "Location permission was denied. Please enable it in your browser settings.",
       );
       return;
     }
@@ -441,7 +495,7 @@ export const useMapOperations = () => {
       (pos) => {
         const { latitude, longitude, accuracy } = pos.coords;
         console.log(
-          `📍 Location found: ${latitude}, ${longitude} (accuracy: ${accuracy}m)`
+          `📍 Location found: ${latitude}, ${longitude} (accuracy: ${accuracy}m)`,
         );
 
         setUserLocation([latitude, longitude]);
@@ -457,17 +511,17 @@ export const useMapOperations = () => {
           case err.PERMISSION_DENIED:
             setLocationPermissionDenied(true);
             setError(
-              "Location access denied. Please allow location permissions in your browser."
+              "Location access denied. Please allow location permissions in your browser.",
             );
             break;
           case err.POSITION_UNAVAILABLE:
             setError(
-              "Location information is unavailable. Check your device settings."
+              "Location information is unavailable. Check your device settings.",
             );
             break;
           case err.TIMEOUT:
             setError(
-              "Location request timed out. Please try again or check your connection."
+              "Location request timed out. Please try again or check your connection.",
             );
             setTimeout(() => getCurrentLocationFallback(), 1000);
             break;
@@ -480,7 +534,7 @@ export const useMapOperations = () => {
         enableHighAccuracy: true,
         timeout: 15000,
         maximumAge: 60000,
-      }
+      },
     );
   };
 
@@ -504,7 +558,7 @@ export const useMapOperations = () => {
         enableHighAccuracy: false,
         timeout: 10000,
         maximumAge: 300000,
-      }
+      },
     );
   };
 
@@ -520,7 +574,7 @@ export const useMapOperations = () => {
         const { latitude, longitude, accuracy } = pos.coords;
         setUserLocation([latitude, longitude]);
         console.log(
-          `🔄 Live update: ${latitude}, ${longitude} (accuracy: ${accuracy}m)`
+          `🔄 Live update: ${latitude}, ${longitude} (accuracy: ${accuracy}m)`,
         );
       },
       (err) => {
@@ -530,7 +584,7 @@ export const useMapOperations = () => {
         enableHighAccuracy: false,
         timeout: 10000,
         maximumAge: 30000,
-      }
+      },
     );
   };
 
@@ -558,7 +612,7 @@ export const useMapOperations = () => {
   const handleOptimizeRoute = async () => {
     if (!userLocation || multipleMarkers.length === 0) {
       setError(
-        "Add at least one delivery stop and ensure your location is detected."
+        "Add at least one delivery stop and ensure your location is detected.",
       );
       return;
     }
@@ -582,7 +636,7 @@ export const useMapOperations = () => {
 
       if (!data || !data.success) {
         throw new Error(
-          data?.error || "Optimization failed - no data returned"
+          data?.error || "Optimization failed - no data returned",
         );
       }
 
@@ -609,7 +663,7 @@ export const useMapOperations = () => {
       console.log(
         `✅ Route optimized via backend! ${
           data.data.optimizedOrder.length
-        } stops, ${data.data.totalDistance || "N/A"} km`
+        } stops, ${data.data.totalDistance || "N/A"} km`,
       );
       console.log("Optimized order:", data.data.optimizedOrder);
     } catch (error) {

@@ -81,4 +81,18 @@ export const optimizationAPI = {
   optimizeRoute: (data) => apiClient.post("/optimization/optimize-route", data),
 };
 
+// Personal Stops API
+export const personalStopsAPI = {
+  getAll: () => apiClient.get("/personal-stops"),
+  create: (data) => apiClient.post("/personal-stops", data),
+  delete: (id) => apiClient.delete(`/personal-stops/${id}`),
+};
+
+// Users API
+export const usersAPI = {
+  getAll: () => apiClient.get("/users"),
+  updateRole: (id, role) => apiClient.patch(`/users/${id}/role`, { role }),
+  updateStatus: (id, isActive) => apiClient.patch(`/users/${id}/status`, { isActive }),
+};
+
 export default apiClient;

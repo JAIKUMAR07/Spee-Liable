@@ -5,7 +5,7 @@ import {
   updateUser,
   deleteUser,
   updateUserRole,
-  deactivateUser,
+  updateUserStatus,
 } from "../controllers/user.controller.js";
 import { protect, authorize } from "../middleware/auth.js";
 
@@ -34,10 +34,10 @@ router.put("/:id", updateUser);
 // @access  Private/Admin
 router.patch("/:id/role", authorize("admin"), updateUserRole);
 
-// @desc    Deactivate user (Admin only)
-// @route   PATCH /api/users/:id/deactivate
+// @desc    Update user status (Admin only)
+// @route   PATCH /api/users/:id/status
 // @access  Private/Admin
-router.patch("/:id/deactivate", authorize("admin"), deactivateUser);
+router.patch("/:id/status", authorize("admin"), updateUserStatus);
 
 // @desc    Delete user (Admin only)
 // @route   DELETE /api/users/:id

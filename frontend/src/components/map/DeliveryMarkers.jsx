@@ -1,6 +1,6 @@
 import React from "react";
 import { Marker, Popup } from "react-leaflet";
-import { redIcon, createBlueNumberedIcon } from "./utils/icons";
+import { redIcon, createBlueNumberedIcon, createOrangeNumberedIcon } from "./utils/icons";
 
 const DeliveryMarkers = ({
   userLocation,
@@ -41,26 +41,28 @@ const DeliveryMarkers = ({
           <Marker
             key={marker._id}
             position={marker.position}
-            icon={createBlueNumberedIcon(displayNumber)}
+            icon={marker.isPersonal ? createOrangeNumberedIcon(displayNumber) : createBlueNumberedIcon(displayNumber)}
           >
             <Popup>
               <div className="text-sm space-y-1 font-medium min-w-[200px]">
                 {/* Availability Status Badge */}
-                <div
-                  className={`text-xs font-semibold px-2 py-1 rounded-full text-center ${
-                    marker.available === "available"
-                      ? "bg-green-100 text-green-800"
+                {!marker.isPersonal && (
+                  <div
+                    className={`text-xs font-semibold px-2 py-1 rounded-full text-center ${
+                      marker.available === "available"
+                        ? "bg-green-100 text-green-800"
+                        : marker.available === "unavailable"
+                        ? "bg-red-100 text-red-800"
+                        : "bg-yellow-100 text-yellow-800"
+                    }`}
+                  >
+                    {marker.available === "available"
+                      ? "✅ Available"
                       : marker.available === "unavailable"
-                      ? "bg-red-100 text-red-800"
-                      : "bg-yellow-100 text-yellow-800"
-                  }`}
-                >
-                  {marker.available === "available"
-                    ? "✅ Available"
-                    : marker.available === "unavailable"
-                    ? "❌ Unavailable"
-                    : "❓ Unknown"}
-                </div>
+                      ? "❌ Unavailable"
+                      : "❓ Unknown"}
+                  </div>
+                )}
 
                 {isOptimized ? (
                   <div className="mt-2 p-1 bg-green-100 text-green-800 text-xs rounded text-center font-bold">
@@ -71,7 +73,12 @@ const DeliveryMarkers = ({
                     📍 Stop #{index + 1}
                   </div>
                 )}
-                <div className="font-semibold text-blue-800">{marker.name}</div>
+                
+                {marker.isPersonal ? (
+                  <div className="font-semibold text-orange-800">☕ {marker.name}</div>
+                ) : (
+                  <div className="font-semibold text-blue-800">{marker.name}</div>
+                )}
 
                 <div className="text-gray-600">📍 {marker.address}</div>
                 {marker.phone_num !== "N/A" && (
@@ -82,10 +89,10 @@ const DeliveryMarkers = ({
                 {canManage && (
                   <div className="mt-2 flex justify-center space-x-2">
                     <button
-                      onClick={() => onDeleteStop(marker._id, marker.name)}
+                      onClick={() => onDeleteStop(marker._id, marker.name, marker.isPersonal)}
                       className="bg-green-700 text-white px-2 py-1 rounded text-xs hover:bg-green-800 transition"
                     >
-                      ✅ Mark Arrived
+                      {marker.isPersonal ? "✅ Finish Stop" : "✅ Mark Arrived"}
                     </button>
                   </div>
                 )}

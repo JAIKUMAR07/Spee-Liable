@@ -6,7 +6,7 @@ const MapControls = ({
   error,
   multipleMarkers,
   onSearch,
-  onAddMarker,
+  onAddPersonalMarker,
   onGetLocation,
   onOptimizeRoute,
   onReset,
@@ -44,10 +44,15 @@ const MapControls = ({
         {/* ✅ Conditionally show Add Stop button based on permissions */}
         {canAddMarker && (
           <button
-            onClick={onAddMarker}
-            className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition"
+            onClick={() => {
+              const reason = window.prompt("Enter reason for personal stop (e.g., Lunch, Fuel):");
+              if (reason && onAddPersonalMarker) {
+                onAddPersonalMarker(reason);
+              }
+            }}
+            className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
           >
-            ➕ Add Stop
+            ☕ Personal Stop
           </button>
         )}
 

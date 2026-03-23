@@ -3,7 +3,7 @@ import { MapContainer, TileLayer } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
 import "leaflet-routing-machine";
-import { deliveryStopsAPI } from "../../utils/apiClient"; // ✅ Updated import
+import { deliveryStopsAPI, personalStopsAPI } from "../../utils/apiClient"; // ✅ Updated import
 import { useAuth } from "../../context/AuthContext"; // ✅ Add auth hook
 
 import { useSocket } from "../../context/SocketContext"; // ADD THIS
@@ -99,19 +99,22 @@ const MapComponent = () => {
 
   // ✅ UPDATED: Use API client and add permission check
   // ✅ UPDATED: Use API client and add permission check with auto-optimization
-  const handleDeleteStop = async (id, name) => {
+  const handleDeleteStop = async (id, name, isPersonal) => {
     if (!can("manage_deliveries")) {
-      alert("You don't have permission to mark deliveries as arrived");
+      alert("You don't have permission to modify stops");
       return;
     }
 
-    if (!window.confirm(`Mark "${name}" as arrived and remove from list?`)) {
+    if (!window.confirm(`Mark "${name}" as finished and remove from list?`)) {
       return;
     }
 
     try {
-      // ✅ Using API client instead of direct fetch
-      await deliveryStopsAPI.delete(id);
+      if (isPersonal) {
+        await personalStopsAPI.delete(id);
+      } else {
+        await deliveryStopsAPI.delete(id);
+      }
 
       // Then remove from local state
       setMultipleMarkers((prev) => prev.filter((marker) => marker._id !== id));
@@ -153,16 +156,15 @@ const MapComponent = () => {
     if (mapRef.current) mapRef.current.flyTo(coordinates, 15);
   };
 
-  // ✅ UPDATED: Add permission check for adding markers
-  const handleAddMarker = async () => {
+  const handleAddPersonalMarker = async (reason) => {
     if (!can("manage_deliveries")) {
-      alert("You don't have permission to add delivery stops");
+      alert("You don't have permission to add personal stops");
       return;
     }
 
     const locationName = searchInputRef.current.value.trim();
     if (!locationName) {
-      setError("Please enter a location to add.");
+      setError("Please enter a location to add a personal stop.");
       return;
     }
 
@@ -174,44 +176,39 @@ const MapComponent = () => {
         return;
       }
 
-      // Prepare data for backend
       const stopData = {
-        name: locationName,
+        reason: reason,
         address: locationName,
         location: {
           lat: coordinates[0],
           lng: coordinates[1],
         },
-        mobile_number: "Manually Added",
-        available: "unknown",
       };
 
-      // ✅ Using API client
-      const response = await deliveryStopsAPI.create(stopData);
-      const savedStop = response.data;
+      const response = await personalStopsAPI.create(stopData);
+      const savedStop = response.data.data;
 
-      // Update local state
       setMultipleMarkers((prev) => [
         ...prev,
         {
           _id: savedStop._id,
           name: savedStop.name,
+          reason: savedStop.reason,
           address: savedStop.address,
-          phone_num: savedStop.mobile_number,
-          pincode: savedStop.pincode || "N/A",
+          phone_num: "N/A",
+          pincode: "N/A",
           position: coordinates,
-          available: savedStop.available,
+          available: "available",
+          isPersonal: true,
         },
       ]);
-
+      
       setSearchLocation(null);
       searchInputRef.current.value = "";
-
-      alert(`"${locationName}" added successfully and saved to database!`);
+      alert(`Personal stop added successfully!`);
     } catch (error) {
-      console.error("Error adding stop:", error);
-      const errorMessage =
-        error.response?.data?.error || "Failed to add stop. Please try again.";
+      console.error("Error adding personal stop:", error);
+      const errorMessage = error.response?.data?.error || "Failed to add personal stop.";
       setError(errorMessage);
     } finally {
       setAddingMarker(false);
@@ -299,7 +296,7 @@ const MapComponent = () => {
           error={error}
           multipleMarkers={multipleMarkers}
           onSearch={handleSearch}
-          onAddMarker={handleAddMarker}
+          onAddPersonalMarker={handleAddPersonalMarker}
           onGetLocation={getCurrentLocation}
           onOptimizeRoute={handleOptimizeRoute}
           onReset={handleReset}

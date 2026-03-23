@@ -110,14 +110,15 @@ export const updateUserRole = asyncHandler(async (req, res, next) => {
   });
 });
 
-// @desc    Deactivate user
-// @route   PATCH /api/users/:id/deactivate
+// @desc    Update user status
+// @route   PATCH /api/users/:id/status
 // @access  Private/Admin
-export const deactivateUser = asyncHandler(async (req, res, next) => {
+export const updateUserStatus = asyncHandler(async (req, res, next) => {
   const userId = req.params.id;
+  const { isActive } = req.body;
 
   // Prevent admin from deactivating themselves
-  if (req.user.id === userId) {
+  if (req.user.id === userId && !isActive) {
     return next(new AppError("Cannot deactivate your own account", 400));
   }
 
@@ -126,12 +127,12 @@ export const deactivateUser = asyncHandler(async (req, res, next) => {
     return next(new AppError("User not found", 404));
   }
 
-  user.isActive = false;
+  user.isActive = isActive;
   await user.save();
 
   res.status(200).json({
     success: true,
-    message: "User deactivated successfully",
+    message: `User ${isActive ? 'activated' : 'deactivated'} successfully`,
     data: {
       id: user._id,
       name: user.name,

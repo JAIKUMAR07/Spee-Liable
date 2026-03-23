@@ -103,27 +103,27 @@ const CustomerDashboard = () => {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-[calc(100vh-130px)] bg-gradient-to-br from-emerald-50 to-sky-100/40 py-8">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Welcome, {user?.name}!
+          <div className="text-center mb-10">
+            <h1 className="text-4xl font-extrabold text-gray-900 mb-2 tracking-tight">
+              Welcome, <span className="text-indigo-600">{user?.name}</span>!
             </h1>
-            <p className="text-gray-600">
+            <p className="text-gray-500 font-medium text-lg">
               Track your packages and manage delivery notifications
             </p>
           </div>
 
           {/* Tabs */}
-          <div className="bg-white rounded-lg shadow-md mb-6">
-            <div className="border-b border-gray-200">
-              <nav className="flex -mb-px">
+          <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-gray-100 mb-6 overflow-hidden">
+            <div className="bg-gray-50/50 border-b border-gray-100 px-2 pt-2">
+              <nav className="flex space-x-4 px-4">
                 <button
                   onClick={() => setActiveTab("notifications")}
-                  className={`py-4 px-6 text-center border-b-2 font-medium text-sm ${
+                  className={`py-4 px-6 text-center border-b-[3px] font-bold text-sm transition-colors ${
                     activeTab === "notifications"
-                      ? "border-indigo-500 text-indigo-600"
+                      ? "border-indigo-600 text-indigo-700 bg-white rounded-t-lg"
                       : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                   }`}
                 >
@@ -132,9 +132,9 @@ const CustomerDashboard = () => {
                 </button>
                 <button
                   onClick={() => setActiveTab("packages")}
-                  className={`py-4 px-6 text-center border-b-2 font-medium text-sm ${
+                  className={`py-4 px-6 text-center border-b-[3px] font-bold text-sm transition-colors ${
                     activeTab === "packages"
-                      ? "border-indigo-500 text-indigo-600"
+                      ? "border-indigo-600 text-indigo-700 bg-white rounded-t-lg"
                       : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                   }`}
                 >
@@ -144,7 +144,7 @@ const CustomerDashboard = () => {
             </div>
 
             {/* Tab Content */}
-            <div className="p-6">
+            <div className="p-6 md:p-8">
               {activeTab === "notifications" && (
                 <NotificationsTab
                   notifications={notifications}
@@ -206,10 +206,10 @@ const NotificationsTab = ({ notifications, loading, onMarkAsRead }) => {
           notifications.map((notification) => (
             <div
               key={notification._id}
-              className={`p-4 border rounded-lg cursor-pointer ${
+              className={`p-5 rounded-xl cursor-pointer transition-all duration-200 shadow-sm border ${
                 notification.isRead
-                  ? "bg-gray-50 border-gray-200"
-                  : "bg-blue-50 border-blue-200"
+                  ? "bg-white border-gray-100 hover:bg-gray-50 hover:shadow-md"
+                  : "bg-indigo-50/50 border-indigo-100 hover:bg-indigo-50 hover:shadow-md"
               }`}
               onClick={() =>
                 !notification.isRead && onMarkAsRead(notification._id)
@@ -276,7 +276,7 @@ const PackagesTab = ({ packages, loading, onStatusUpdate }) => {
           packages.map((pkg) => (
             <div
               key={pkg._id}
-              className="bg-white border border-gray-200 rounded-lg p-4"
+              className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow ring-1 ring-gray-50"
             >
               <div className="flex justify-between items-start">
                 <div className="flex-1">

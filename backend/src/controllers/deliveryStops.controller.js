@@ -99,20 +99,10 @@ export const createDeliveryStop = asyncHandler(async (req, res, next) => {
   const savedStop = await newStop.save();
   await savedStop.populate("customer", "name email");
 
-  // ✅ Create notification for customer
-  await Notification.create({
-    user: customer._id,
-    title: "Package Scanned",
-    message: `Your package "${name}" has been scanned and is ready for delivery. Please update availability status.`,
-    type: "package_scanned",
-    deliveryStop: savedStop._id,
-    actionRequired: true,
-  });
-
   res.status(201).json({
     success: true,
     data: savedStop,
-    message: "Package scanned successfully and customer notified",
+    message: "Package scanned and added to your delivery list.",
   });
 });
 
@@ -306,5 +296,45 @@ export const getCustomerPackages = asyncHandler(async (req, res, next) => {
     success: true,
     count: packages.length,
     data: packages,
+  });
+});
+
+// @desc    Notify all customers that driver is ready for delivery
+// @route   POST /api/delivery-stops/notify-ready
+// @access  Private (Driver only)
+export const notifyReadyForDelivery = asyncHandler(async (req, res, next) => {
+  const stops = await DeliveryStop.find({ assignedTo: req.user.id })
+    .populate("customer", "name email");
+
+  // ✅ Filter out stops with missing customers (stale data)
+  const stopsToNotify = stops.filter(stop => stop.customer);
+
+  if (stopsToNotify.length === 0) {
+    return next(new AppError("No valid customers found to notify", 404));
+  }
+
+  const notifications = stopsToNotify.map(stop => ({
+    user: stop.customer._id,
+    title: "Out for Delivery",
+    message: `The driver has started the delivery session for your package "${stop.name}". Please ensure your availability status is updated.`,
+    type: "driver_ready",
+    deliveryStop: stop._id,
+    actionRequired: true,
+  }));
+
+  await Notification.insertMany(notifications);
+
+  // Optional: Emit socket event for real-time update
+  if (io) {
+    io.emit("driver-ready", {
+      driverId: req.user.id,
+      driverName: req.user.name,
+      timestamp: new Date(),
+    });
+  }
+
+  res.status(200).json({
+    success: true,
+    message: `Notifications sent to ${stops.length} customers`,
   });
 });

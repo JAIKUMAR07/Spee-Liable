@@ -6,8 +6,9 @@ import {
   updateDeliveryStopAvailability,
   deleteDeliveryStop,
   getDeliveryStats, // ✅ New route
-  getCustomerPackages, // ✅ ADD THIS
-  updatePackageAvailability, // ✅ ADD THIS
+  getCustomerPackages,
+  updatePackageAvailability,
+  notifyReadyForDelivery,
 } from "../controllers/deliveryStops.controller.js";
 import { protect, authorize } from "../middleware/auth.js";
 
@@ -34,6 +35,9 @@ router.route("/all").get(authorize("admin"), getAllDeliveryStops);
 
 // ✅ New route for user stats
 router.route("/stats").get(getDeliveryStats);
+
+// ✅ NEW ROUTE FOR READY NOTIFICATION
+router.route("/notify-ready").post(authorize("driver"), notifyReadyForDelivery);
 
 router
   .route("/:id")

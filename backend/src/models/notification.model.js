@@ -17,7 +17,13 @@ const notificationSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["delivery_update", "package_scanned", "status_change", "system"],
+      enum: [
+        "delivery_update",
+        "package_scanned",
+        "status_change",
+        "system",
+        "driver_ready",
+      ],
       default: "system",
     },
     deliveryStop: {

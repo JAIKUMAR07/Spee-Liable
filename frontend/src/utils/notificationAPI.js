@@ -30,4 +30,7 @@ export const customerAPI = {
 export const deliveryAPI = {
   // Scan package with customer email
   scanPackage: (packageData) => apiClient.post("/delivery-stops", packageData),
+
+  // Notify all customers that driver is ready
+  notifyReady: () => apiClient.post("/delivery-stops/notify-ready"),
 };

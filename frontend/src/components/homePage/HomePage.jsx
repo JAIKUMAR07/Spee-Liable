@@ -57,45 +57,45 @@ const Home = () => {
 
     if (user.role === "driver") {
       return (
-        <div className="flex gap-6 flex-wrap justify-center">
+        <div className="flex gap-8 flex-wrap justify-center mt-6">
           <Link
             to="/qrpage"
-            className="w-64 h-64 bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-transform transform hover:-translate-y-1"
+            className="w-56 h-auto min-h-[14rem] bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-gray-100 flex flex-col items-center justify-center p-6 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] transition-all duration-300 transform hover:-translate-y-2"
           >
             <img
               src="https://cdn-icons-png.flaticon.com/128/12216/12216522.png"
               alt="Scan QR Codes"
-              className="w-full h-3/4 object-contain p-4"
+              className="w-24 h-24 object-contain mb-4 drop-shadow-sm"
             />
-            <h1 className="text-center text-lg font-semibold py-2">
+            <h1 className="text-center text-lg font-bold text-gray-800">
               Scan Packages
             </h1>
           </Link>
 
           <Link
             to="/map"
-            className="w-64 h-64 bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-transform transform hover:-translate-y-1"
+            className="w-56 h-auto min-h-[14rem] bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-gray-100 flex flex-col items-center justify-center p-6 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] transition-all duration-300 transform hover:-translate-y-2"
           >
             <img
               src="https://cdn-icons-png.flaticon.com/512/854/854878.png"
               alt="Explore Map"
-              className="w-full h-3/4 object-contain p-4"
+              className="w-24 h-24 object-contain mb-4 drop-shadow-sm"
             />
-            <h1 className="text-center text-lg font-semibold py-2">
+            <h1 className="text-center text-lg font-bold text-gray-800">
               Delivery Routes
             </h1>
           </Link>
 
           <Link
             to="/delivery-management"
-            className="w-64 h-64 bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-transform transform hover:-translate-y-1"
+            className="w-56 h-auto min-h-[14rem] bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-gray-100 flex flex-col items-center justify-center p-6 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] transition-all duration-300 transform hover:-translate-y-2"
           >
             <img
               src="https://cdn-icons-png.flaticon.com/512/3063/3063512.png"
               alt="Manage Deliveries"
-              className="w-full h-3/4 object-contain p-4"
+              className="w-24 h-24 object-contain mb-4 drop-shadow-sm"
             />
-            <h1 className="text-center text-lg font-semibold py-2">
+            <h1 className="text-center text-lg font-bold text-gray-800">
               Manage Deliveries
             </h1>
           </Link>
@@ -105,31 +105,31 @@ const Home = () => {
 
     if (user.role === "customer") {
       return (
-        <div className="flex gap-6 flex-wrap justify-center">
+        <div className="flex gap-8 flex-wrap justify-center mt-6">
           <Link
             to="/customer-dashboard"
-            className="w-64 h-64 bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-transform transform hover:-translate-y-1"
+            className="w-56 h-auto min-h-[14rem] bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-gray-100 flex flex-col items-center justify-center p-6 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] transition-all duration-300 transform hover:-translate-y-2"
           >
             <img
               src="https://cdn-icons-png.flaticon.com/512/1827/1827344.png"
               alt="Dashboard"
-              className="w-full h-3/4 object-contain p-4"
+              className="w-24 h-24 object-contain mb-4 drop-shadow-sm"
             />
-            <h1 className="text-center text-lg font-semibold py-2">
+            <h1 className="text-center text-lg font-bold text-gray-800">
               My Dashboard
             </h1>
           </Link>
 
           <Link
             to="/customer-dashboard?tab=notifications"
-            className="w-64 h-64 bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-transform transform hover:-translate-y-1"
+            className="w-56 h-auto min-h-[14rem] bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-gray-100 flex flex-col items-center justify-center p-6 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] transition-all duration-300 transform hover:-translate-y-2"
           >
             <img
               src="https://cdn-icons-png.flaticon.com/512/565/565422.png"
               alt="Notifications"
-              className="w-full h-3/4 object-contain p-4"
+              className="w-24 h-24 object-contain mb-4 drop-shadow-sm"
             />
-            <h1 className="text-center text-lg font-semibold py-2">
+            <h1 className="text-center text-lg font-bold text-gray-800">
               Notifications
             </h1>
           </Link>
@@ -139,17 +139,17 @@ const Home = () => {
 
     if (user.role === "admin") {
       return (
-        <div className="flex gap-6 flex-wrap justify-center">
+        <div className="flex gap-8 flex-wrap justify-center mt-6">
           <Link
             to="/user-management"
-            className="w-64 h-64 bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-transform transform hover:-translate-y-1"
+            className="w-56 h-auto min-h-[14rem] bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-gray-100 flex flex-col items-center justify-center p-6 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] transition-all duration-300 transform hover:-translate-y-2"
           >
             <img
               src="https://cdn-icons-png.flaticon.com/512/1077/1077063.png"
               alt="User Management"
-              className="w-full h-3/4 object-contain p-4"
+              className="w-24 h-24 object-contain mb-4 drop-shadow-sm"
             />
-            <h1 className="text-center text-lg font-semibold py-2">
+            <h1 className="text-center text-lg font-bold text-gray-800">
               User Management
             </h1>
           </Link>
@@ -160,12 +160,12 @@ const Home = () => {
 
   return (
     <Layout>
-      <div>
-        <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center px-4 py-8">
-          <h1 className="text-4xl font-bold mb-2 text-center">
-            Welcome to Speeliable
+      <div className="min-h-[calc(100vh-130px)] bg-gradient-to-br from-emerald-50 via-white to-sky-100/50 flex flex-col items-center justify-center px-4 py-16">
+        <div className="w-full max-w-5xl ">
+          <h1 className="text-5xl font-extrabold mb-4 text-center text-teal-950 tracking-tight">
+            Welcome to SpeeLiable
           </h1>
-          <p className="text-gray-600 mb-10 text-center max-w-md">
+          <p className="text-gray-600 mb-10 text-center max-w-md mx-auto">
             {user?.role === "driver" &&
               "Efficient delivery management for drivers"}
             {user?.role === "customer" &&
@@ -181,31 +181,31 @@ const Home = () => {
 
           {/* Default content for non-authenticated users */}
           {!user && (
-            <div className="flex gap-6 flex-wrap justify-center">
+            <div className="flex gap-8 flex-wrap justify-center mt-6">
               <Link
                 to="/login"
-                className="w-64 h-64 bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-transform transform hover:-translate-y-1"
+                className="w-56 h-auto min-h-[14rem] bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-gray-100 flex flex-col items-center justify-center p-6 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] transition-all duration-300 transform hover:-translate-y-2"
               >
                 <img
                   src="https://cdn-icons-png.flaticon.com/512/565/565422.png"
                   alt="Login"
-                  className="w-full h-3/4 object-contain p-4"
+                  className="w-24 h-24 object-contain mb-4"
                 />
-                <h1 className="text-center text-lg font-semibold py-2">
+                <h1 className="text-center text-lg font-bold text-gray-800">
                   Login
                 </h1>
               </Link>
 
               <Link
                 to="/register"
-                className="w-64 h-64 bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-transform transform hover:-translate-y-1"
+                className="w-56 h-auto min-h-[14rem] bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-gray-100 flex flex-col items-center justify-center p-6 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] transition-all duration-300 transform hover:-translate-y-2"
               >
                 <img
                   src="https://cdn-icons-png.flaticon.com/512/1000/1000997.png"
                   alt="Register"
-                  className="w-full h-3/4 object-contain p-4"
+                  className="w-24 h-24 object-contain mb-4"
                 />
-                <h1 className="text-center text-lg font-semibold py-2">
+                <h1 className="text-center text-lg font-bold text-gray-800">
                   Register
                 </h1>
               </Link>

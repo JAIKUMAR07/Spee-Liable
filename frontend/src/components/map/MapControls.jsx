@@ -29,7 +29,7 @@ const MapControls = ({
         type="text"
         placeholder="Enter address, landmark, or pincode..."
         onKeyPress={handleKeyPress}
-        className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+        className="w-full max-w-md px-4 py-2 border border-black rounded-lg focus:ring-2 focus:ring-blue-500"
       />
 
       <div className="flex flex-wrap justify-center gap-3 mt-2">
@@ -45,7 +45,9 @@ const MapControls = ({
         {canAddMarker && (
           <button
             onClick={() => {
-              const reason = window.prompt("Enter reason for personal stop (e.g., Lunch, Fuel):");
+              const reason = window.prompt(
+                "Enter reason for personal stop (e.g., Lunch, Fuel):",
+              );
               if (reason && onAddPersonalMarker) {
                 onAddPersonalMarker(reason);
               }

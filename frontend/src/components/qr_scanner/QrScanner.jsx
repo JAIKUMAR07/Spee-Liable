@@ -17,6 +17,7 @@ const QrScanner = () => {
   const [customerEmail, setCustomerEmail] = useState(""); // ✅ ADD THIS STATE
   const [addingManually, setAddingManually] = useState(false);
   const [scanError, setScanError] = useState(""); // ✅ ADD ERROR STATE
+  const [notifying, setNotifying] = useState(false); // ✅ ADD NOTIFYING STATE
 
   const { stops, loading, error, addStop, deleteStop, setError, fetchStops } =
     useDeliveryStops();
@@ -47,8 +48,8 @@ const QrScanner = () => {
           customerEmail: email.trim(),
         });
 
-        const savedStop = response.data;
-        alert(`${savedStop.name} scanned successfully! Customer notified.`);
+        const savedStop = response.data.data;
+        alert(`${savedStop.name} scanned successfully!`);
         toggleScanning();
 
         // Refresh the stops list
@@ -120,7 +121,7 @@ const QrScanner = () => {
         customerEmail: email.trim(),
       });
 
-      alert(`Package scanned successfully! Customer notified.`);
+      alert(`Package scanned successfully!`);
 
       // Refresh the stops list
       fetchStops();
@@ -160,9 +161,9 @@ const QrScanner = () => {
 
       // ✅ USE THE NEW API
       const response = await deliveryAPI.scanPackage(stopData);
-      const savedStop = response.data;
+      const savedStop = response.data.data;
 
-      alert(`"${savedStop.name}" scanned successfully! Customer notified.`);
+      alert(`"${savedStop.name}" added to your delivery list!`);
 
       // Clear form
       setName("");
@@ -215,8 +216,8 @@ const QrScanner = () => {
 
   return (
     <Layout>
-      <div className="flex flex-col items-center p-6 bg-gray-100 min-h-screen space-y-6">
-        <h2 className="text-3xl font-bold text-gray-800 text-center">
+      <div className="min-h-[calc(100vh-130px)] bg-gradient-to-br from-emerald-50 to-sky-100/40 flex flex-col items-center py-10 px-4 sm:px-6 lg:px-8 space-y-6">
+        <h2 className="text-4xl font-extrabold text-gray-900 text-center tracking-tight">
           Package Scanner
         </h2>
 
@@ -268,15 +269,43 @@ const QrScanner = () => {
 
         {/* ✅ Only show ready button if user has stops */}
         {stops.length > 0 && (
-          <button
-            onClick={() => {
-              console.log("Delivery List:", stops);
-              alert(`Ready for delivery! ${stops.length} packages loaded.`);
-            }}
-            className="mt-4 bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition"
-          >
-            ✅ Ready for Delivery ({stops.length} packages)
-          </button>
+          <div className="w-full flex justify-center pb-10">
+            <button
+              onClick={async () => {
+                setNotifying(true);
+                try {
+                  const response = await deliveryAPI.notifyReady();
+                  alert(
+                    response.data.message ||
+                      `Ready for delivery! ${stops.length} customers notified.`
+                  );
+                } catch (error) {
+                  console.error("Notify ready error:", error);
+                  const errorMessage =
+                    error.response?.data?.error ||
+                    "Failed to notify customers about delivery start.";
+                  alert(errorMessage);
+                } finally {
+                  setNotifying(false);
+                }
+              }}
+              disabled={notifying}
+              className={`w-full max-w-lg bg-indigo-600 shadow-xl border border-indigo-700 font-extrabold text-white px-10 py-4 rounded-2xl transition-all duration-300 transform ${
+                notifying
+                  ? "opacity-70 cursor-not-allowed"
+                  : "hover:bg-indigo-700 hover:scale-105 active:scale-95"
+              }`}
+            >
+              {notifying ? (
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+                  Preparing...
+                </div>
+              ) : (
+                `🚀 ✅ Ready for Delivery (${stops.length} packages loaded)`
+              )}
+            </button>
+          </div>
         )}
       </div>
     </Layout>

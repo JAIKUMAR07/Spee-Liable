@@ -32,7 +32,7 @@ const DeliveryCard = ({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 hover:shadow-lg transition-shadow">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 ring-1 ring-gray-50 p-6 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
       {/* Header with name and status */}
       <div className="flex justify-between items-start mb-4">
         <h3 className="text-xl font-bold text-gray-800 truncate">
@@ -75,14 +75,14 @@ const DeliveryCard = ({
       </div>
 
       {/* Action Buttons - Conditionally rendered based on permissions */}
-      <div className="flex justify-between items-center space-x-2">
+      <div className="flex justify-between items-center space-x-3 mt-4">
         <button
           onClick={handleToggle}
-          disabled={!canManage} // ✅ Disable if no permission
-          className={`flex-1 py-2 px-4 rounded-lg font-semibold transition ${
+          disabled={!canManage}
+          className={`flex-1 py-2.5 px-4 rounded-xl font-bold text-sm transition shadow-sm hover:shadow ${
             delivery.available === "available"
-              ? "bg-red-500 hover:bg-red-600 text-white"
-              : "bg-green-500 hover:bg-green-600 text-white"
+              ? "bg-red-50 hover:bg-red-100 text-red-600 border border-red-200"
+              : "bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200"
           } ${!canManage ? "opacity-50 cursor-not-allowed" : ""}`}
         >
           {delivery.available === "available"
@@ -90,10 +90,10 @@ const DeliveryCard = ({
             : "Mark Available"}
         </button>
 
-        {canDelete && ( // ✅ Only show delete button if user has permission
+        {canDelete && (
           <button
             onClick={handleDelete}
-            className="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg font-semibold transition"
+            className="bg-gray-50 hover:bg-red-50 text-gray-600 hover:text-red-600 border border-gray-200 hover:border-red-200 py-2.5 px-4 rounded-xl font-bold text-sm transition shadow-sm hover:shadow"
           >
             🗑️ Delete
           </button>

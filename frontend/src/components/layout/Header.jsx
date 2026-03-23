@@ -60,22 +60,11 @@ const Header = () => {
         <Link
           to={"/"}
           onClick={() => setShowMobileMenu(false)}
-          className="block px-4 py-2 hover:bg-blue-50 rounded transition text-lg "
+          className="block px-3 py-1.5 text-emerald-800 hover:text-emerald-900 transition-all duration-200 hover:scale-120 text-[15px] font-bold tracking-wide transform"
         >
           Home
         </Link>
-      </li>
-    );
-    links.push(
-      <li key="profile">
-        <Link
-          to="/profile"
-          onClick={() => setShowMobileMenu(false)}
-          className="block px-4 py-2 hover:bg-blue-50 rounded transition text-lg"
-        >
-          Profile
-        </Link>
-      </li>
+      </li>,
     );
 
     // Driver-specific links
@@ -85,11 +74,11 @@ const Header = () => {
           <Link
             to={"/qrpage"}
             onClick={() => setShowMobileMenu(false)}
-            className="block px-4 py-2 hover:bg-blue-50 rounded transition text-lg"
+            className="block px-3 py-1.5 text-emerald-800 hover:text-emerald-900 transition-all duration-200 hover:scale-120 text-[15px] font-bold tracking-wide transform"
           >
             QR Scanner
           </Link>
-        </li>
+        </li>,
       );
     }
     if (can("optimize_routes")) {
@@ -98,11 +87,11 @@ const Header = () => {
           <Link
             to={"/map"}
             onClick={() => setShowMobileMenu(false)}
-            className="block px-4 py-2 hover:bg-blue-50 rounded transition text-lg"
+            className="block px-3 py-1.5 text-emerald-800 hover:text-emerald-900 transition-all duration-200 hover:scale-120 text-[15px] font-bold tracking-wide transform"
           >
             Map
           </Link>
-        </li>
+        </li>,
       );
     }
     if (can("manage_deliveries")) {
@@ -111,11 +100,11 @@ const Header = () => {
           <Link
             to="/delivery-management"
             onClick={() => setShowMobileMenu(false)}
-            className="block px-4 py-2 hover:bg-blue-50 rounded transition text-lg"
+            className="block px-3 py-1.5 text-emerald-800 hover:text-emerald-900 transition-all duration-200 hover:scale-120 text-[15px] font-bold tracking-wide transform"
           >
             Management
           </Link>
-        </li>
+        </li>,
       );
     }
 
@@ -126,11 +115,11 @@ const Header = () => {
           <Link
             to="/customer-dashboard"
             onClick={() => setShowMobileMenu(false)}
-            className="block px-4 py-2 hover:bg-blue-50 rounded transition text-lg"
+            className="block px-3 py-1.5 text-emerald-800 hover:text-emerald-900 transition-all duration-200 hover:scale-120 text-[15px] font-bold tracking-wide transform"
           >
             My Dashboard
           </Link>
-        </li>
+        </li>,
       );
     }
 
@@ -141,11 +130,11 @@ const Header = () => {
           <Link
             to="/user-management"
             onClick={() => setShowMobileMenu(false)}
-            className="block px-4 py-2 hover:bg-blue-50 rounded transition text-lg"
+            className="block px-3 py-1.5 text-emerald-800 hover:text-emerald-900 transition-all duration-200 hover:scale-120 text-[15px] font-bold tracking-wide transform"
           >
             User Management
           </Link>
-        </li>
+        </li>,
       );
     }
 
@@ -166,12 +155,18 @@ const Header = () => {
   };
 
   return (
-    <nav className="bg-gradient-to-r from-sky-400 to-emerald-400 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center py-3">
+    <nav className="bg-gradient-to-r from-gray-100 to-gray-100 sticky top-0 z-[9999] shadow-md border-b border-gray-100">
+      <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center py-2 lg:py-3">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <h2 className="font-bold text-black text-2xl">SpeeLiable</h2>
+            <h2 className="font-extrabold text-indigo-700 text-2xl tracking-tight">
+              <img
+                src="speeliable_logo.png"
+                className="h-10 sm:h-12 w-auto object-contain"
+                alt="Speeliable"
+              />
+            </h2>
           </div>
 
           {/* Desktop Navigation */}
@@ -185,22 +180,22 @@ const Header = () => {
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setShowDropdown(!showDropdown)}
-                  className="flex items-center space-x-2 bg-white/20 px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200"
+                  className="flex items-center space-x-2 bg-emerald-50/50 border border-emerald-100 px-3 py-1.5 rounded-xl hover:bg-emerald-100 transition-all duration-200 hover:scale-105 transform"
                 >
-                  <User size={18} className="text-black" />
-                  <span className="text-black font-semibold text-sm">
+                  <User size={16} className="text-emerald-800" />
+                  <span className="text-emerald-900 font-bold text-[13px]">
                     {user?.name.split(" ")[0]}
                   </span>
                   <span
                     className={`px-2 py-1 rounded-full text-xs font-semibold border ${getRoleBadgeColor(
-                      user?.role
+                      user?.role,
                     )}`}
                   >
                     {user?.role}
                   </span>
                   <ChevronDown
                     size={16}
-                    className={`transition-transform ${
+                    className={`text-emerald-800 transition-transform ${
                       showDropdown ? "rotate-180" : ""
                     }`}
                   />
@@ -218,7 +213,7 @@ const Header = () => {
                       <div className="flex items-center mt-1">
                         <span
                           className={`px-2 py-1 rounded-full text-xs font-semibold ${getRoleBadgeColor(
-                            user?.role
+                            user?.role,
                           )}`}
                         >
                           {user?.role}
@@ -247,16 +242,16 @@ const Header = () => {
 
           {/* Login/Register for desktop when not authenticated */}
           {!isAuthenticated && !isMobile && (
-            <div className="hidden lg:flex space-x-3">
+            <div className="hidden lg:flex space-x-3 items-center">
               <Link
                 to="/login"
-                className="bg-white/20 px-4 py-2 rounded-lg text-black font-semibold hover:bg-white/30 transition text-sm"
+                className="text-emerald-800 font-bold hover:text-emerald-900 transition-all duration-200 hover:scale-105 transform px-3 py-1.5 text-[13px]"
               >
                 Login
               </Link>
               <Link
                 to="/register"
-                className="bg-white px-4 py-2 rounded-lg text-black font-semibold hover:bg-gray-100 transition text-sm"
+                className="bg-emerald-700 px-4 py-2.5 rounded-full text-white font-bold hover:bg-emerald-800 shadow-sm hover:shadow transition-all duration-200 hover:scale-105 transform text-[13px]"
               >
                 Register
               </Link>
@@ -268,15 +263,19 @@ const Header = () => {
             {isAuthenticated ? (
               <button
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
-                className="flex items-center space-x-2 bg-white/20 px-3 py-2 rounded-lg hover:bg-white/30 transition"
+                className="flex items-center space-x-1.5 bg-emerald-50 border border-emerald-100 px-3 py-1.5 rounded-full hover:bg-emerald-100 transition"
               >
-                {showMobileMenu ? <X size={24} /> : <Menu size={24} />}
-                <span className="text-black font-semibold text-sm">
+                {showMobileMenu ? (
+                  <X size={18} className="text-emerald-800" />
+                ) : (
+                  <Menu size={18} className="text-emerald-800" />
+                )}
+                <span className="text-emerald-900 font-bold text-[13px] hidden sm:block">
                   {user?.name.split(" ")[0]}
                 </span>
                 <span
                   className={`px-2 py-1 rounded-full text-xs font-semibold border ${getRoleBadgeColor(
-                    user?.role
+                    user?.role,
                   )}`}
                 >
                   {user?.role}
@@ -301,8 +300,12 @@ const Header = () => {
           >
             {isAuthenticated ? (
               <>
-                {/* User Info in Mobile Menu */}
-                <div className="px-4 py-3 border-b">
+                {/* User Info in Mobile Menu - Clickable for Profile */}
+                <Link
+                  to="/profile"
+                  onClick={() => setShowMobileMenu(false)}
+                  className="block px-4 py-3 border-b hover:bg-emerald-50 transition-colors"
+                >
                   <div className="font-semibold text-gray-900">
                     {user?.name}
                   </div>
@@ -310,13 +313,13 @@ const Header = () => {
                   <div className="flex items-center mt-2">
                     <span
                       className={`px-3 py-1 rounded-full text-sm font-semibold ${getRoleBadgeColor(
-                        user?.role
+                        user?.role,
                       )}`}
                     >
                       {user?.role}
                     </span>
                   </div>
-                </div>
+                </Link>
 
                 {/* Mobile Navigation Links */}
                 <ul className="py-2">{getNavLinks()}</ul>

@@ -1,4 +1,5 @@
 import React from "react";
+import { User, MapPin, Mail, Phone, Trash2 } from "lucide-react";
 
 const StopsList = ({ stops, onDeleteStop, loading, canDelete = false }) => {
   if (loading) {
@@ -28,34 +29,48 @@ const StopsList = ({ stops, onDeleteStop, loading, canDelete = false }) => {
               className="flex justify-between items-center p-3 border rounded-md bg-gray-50 hover:bg-gray-100 group"
             >
               <div className="flex-1">
-                <span className="font-medium text-gray-800 block">
-                  {stop.name}
-                </span>
-                <span className="text-xs text-gray-500 block mt-1">
-                  {stop.address}
-                </span>
-                <span
-                  className={`text-xs px-2 py-1 rounded-full ${
-                    stop.available === "available"
-                      ? "bg-green-100 text-green-800"
-                      : stop.available === "unavailable"
-                      ? "bg-red-100 text-red-800"
-                      : "bg-yellow-100 text-yellow-800"
-                  }`}
-                >
-                  {stop.available || "unknown"}
-                </span>
+                <div className="flex justify-between items-start">
+                  <span className="font-bold text-gray-900 text-lg block">
+                    {stop.name}
+                  </span>
+                  <span
+                    className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full font-bold ${
+                      stop.available === "available"
+                        ? "bg-green-100 text-green-700 border border-green-200"
+                        : stop.available === "unavailable"
+                        ? "bg-red-100 text-red-700 border border-red-200"
+                        : "bg-amber-100 text-amber-700 border border-amber-200"
+                    }`}
+                  >
+                    {stop.available || "unknown"}
+                  </span>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 mt-2">
+                  <div className="flex items-center text-xs text-slate-600 mb-1">
+                    <span className="font-semibold mr-1 text-slate-800">📍 Address:</span> {stop.address}
+                  </div>
+                  <div className="flex items-center text-xs text-slate-600 mb-1">
+                    <span className="font-semibold mr-1 text-slate-800">📧 Customer:</span> {stop.customer?.email || 'N/A'}
+                  </div>
+                  <div className="flex items-center text-xs text-slate-600 mb-1">
+                    <span className="font-semibold mr-1 text-slate-800">👤 Name:</span> {stop.customer?.name || 'N/A'}
+                  </div>
+                  <div className="flex items-center text-xs text-slate-600 mb-1">
+                    <span className="font-semibold mr-1 text-slate-800">📱 Mobile:</span> {stop.mobile_number || 'N/A'}
+                  </div>
+                </div>
               </div>
 
-              {/* ✅ UPDATED: Always show delete button for drivers (they can only delete their own) */}
-              {canDelete || (
+              {/* ✅ UPDATED: Always show delete button if user has permission */}
+              {canDelete && (
                 <button
                   onClick={() => onDeleteStop(stop._id, stop.name)}
                   disabled={loading}
-                  className="text-red-600 hover:text-red-800     ml-2"
+                  className="p-2 text-red-100 bg-red-600 hover:bg-red-700 rounded-lg transition-colors ml-4"
                   title="Delete this stop"
                 >
-                  ❌
+                  <Trash2 size={16} />
                 </button>
               )}
             </li>

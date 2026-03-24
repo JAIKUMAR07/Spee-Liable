@@ -2,25 +2,20 @@ import React from "react";
 
 const Footer = () => {
   return (
-    <footer className="bg-black text-slate-300 py-8 w-full mt-auto">
-      <div className="container mx-auto px-4 text-center">
-        {/* Logo */}
-        <div className="flex justify-center mb-4">
-          <h2 className="font-extrabold text-indigo-700 text-2xl tracking-tight">
-            <img
-              src="speeliable_logo.png"
-              className="h-12 sm:h-15 w-auto object-contain"
-              alt="Speeliable"
-            />
-          </h2>
-        </div>
-
-        <p className="text-sm">
-          Empowering delivery workforces by automating manual planing
+    <footer className="mt-auto border-t border-emerald-100 bg-white">
+      <div className="mx-auto flex max-w-7xl flex-col items-center gap-3 px-4 py-6 text-center sm:px-6 lg:px-8">
+        <img
+          src="speeliable_logo.png"
+          className="h-10 w-auto object-contain"
+          alt="Speeliable"
+        />
+        <p className="max-w-xl text-sm text-slate-600">
+          Empowering delivery workforces with clear routes, fast updates, and
+          reliable customer communication.
         </p>
-        <div className="mt-6 pt-6 border-t border-slate-600 text-xs font-medium uppercase tracking-wider">
-          Â© {new Date().getFullYear()} All Rights Reserved
-        </div>
+        <p className="text-xs font-semibold tracking-wide text-slate-500">
+          © {new Date().getFullYear()} Speeliable. All rights reserved.
+        </p>
       </div>
     </footer>
   );

@@ -9,27 +9,25 @@ import ManualForm from "./components/ManualForm";
 import StopsList from "./components/StopsList";
 import ErrorDisplay from "./components/ErrorDisplay";
 import { useAuth } from "../../context/AuthContext";
-import { deliveryAPI } from "../../utils/notificationAPI"; // ✅ ADD THIS IMPORT
+import { deliveryAPI } from "../../utils/notificationAPI";
 
 const QrScanner = () => {
   const [name, setName] = useState("");
   const [manualAddress, setManualAddress] = useState("");
-  const [customerEmail, setCustomerEmail] = useState(""); // ✅ ADD THIS STATE
+  const [customerEmail, setCustomerEmail] = useState("");
   const [addingManually, setAddingManually] = useState(false);
-  const [scanError, setScanError] = useState(""); // ✅ ADD ERROR STATE
-  const [notifying, setNotifying] = useState(false); // ✅ ADD NOTIFYING STATE
+  const [scanError, setScanError] = useState("");
+  const [notifying, setNotifying] = useState(false);
   const [isProcessingScan, setIsProcessingScan] = useState(false);
 
-  const { stops, loading, error, prependStop, deleteStop, setError } =
-    useDeliveryStops();
+  const { stops, loading, error, prependStop, deleteStop, setError } = useDeliveryStops();
   const { can } = useAuth();
 
-  // Keep scanner callback stable while allowing latest logic inside.
   const scanSuccessRef = useRef(async () => {});
-  const { scanning, toggleScanning, stopScanning, regionId } =
-    useQrScanner((decodedText) => scanSuccessRef.current(decodedText));
+  const { scanning, toggleScanning, stopScanning, regionId } = useQrScanner((decodedText) =>
+    scanSuccessRef.current(decodedText)
+  );
 
-  // ✅ FIXED: Handle QR scan success with customer email
   const handleScanSuccess = useCallback(
     async (decodedText) => {
       if (isProcessingScan) return;
@@ -41,20 +39,17 @@ const QrScanner = () => {
       }
 
       setIsProcessingScan(true);
-      // Stop camera immediately after first successful decode to avoid duplicate processing
       stopScanning();
 
       try {
         const stopData = parseQrData(decodedText);
 
-        // ✅ ADD: Prompt for customer email for QR scans too
         const email = prompt("Please enter customer email for this package:");
         if (!email || !email.trim()) {
           alert("Customer email is required");
           return;
         }
 
-        // ✅ USE THE NEW API with customer email
         const response = await deliveryAPI.scanPackage({
           ...stopData,
           customerEmail: email.trim(),
@@ -65,8 +60,7 @@ const QrScanner = () => {
         alert(`${savedStop.name} scanned successfully!`);
       } catch (err) {
         console.error("QR Scan error:", err);
-        const errorMessage =
-          err.response?.data?.error || err.message || "Failed to scan package";
+        const errorMessage = err.response?.data?.error || err.message || "Failed to scan package";
         setScanError(errorMessage);
       } finally {
         setIsProcessingScan(false);
@@ -79,15 +73,11 @@ const QrScanner = () => {
     scanSuccessRef.current = handleScanSuccess;
   }, [handleScanSuccess]);
 
-  // Geocode function
   const geocodeAddress = async (address) => {
     try {
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-          address
-        )}&limit=1`
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`
       );
-
       const data = await response.json();
 
       if (data && data.length > 0) {
@@ -97,18 +87,15 @@ const QrScanner = () => {
         };
       }
       return null;
-    } catch (error) {
-      console.error("Geocoding error:", error);
+    } catch (fetchError) {
+      console.error("Geocoding error:", fetchError);
       return null;
     }
   };
 
-  // Avoid blocking manual scan flow on slow geocoding services.
   const geocodeAddressWithTimeout = async (address, timeoutMs = 2500) => {
     try {
-      const timeoutPromise = new Promise((resolve) =>
-        setTimeout(() => resolve(null), timeoutMs)
-      );
+      const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve(null), timeoutMs));
       const result = await Promise.race([geocodeAddress(address), timeoutPromise]);
       return result;
     } catch {
@@ -116,7 +103,6 @@ const QrScanner = () => {
     }
   };
 
-  // ✅ FIXED: Handle image upload with customer email
   const handleImageUpload = async (event) => {
     if (!can("scan_qr")) {
       alert("You don't have permission to upload QR images");
@@ -130,7 +116,6 @@ const QrScanner = () => {
       const html5QrCode = new Html5Qrcode("upload-region");
       const decodedText = await html5QrCode.scanFile(file, true);
 
-      // ✅ ADD: Prompt for customer email for image uploads too
       const email = prompt("Please enter customer email for this package:");
       if (!email || !email.trim()) {
         alert("Customer email is required");
@@ -138,8 +123,6 @@ const QrScanner = () => {
       }
 
       const stopData = parseQrData(decodedText);
-
-      // ✅ USE THE NEW API
       const response = await deliveryAPI.scanPackage({
         ...stopData,
         customerEmail: email.trim(),
@@ -147,7 +130,7 @@ const QrScanner = () => {
 
       const savedStop = response.data.data;
       prependStop(savedStop);
-      alert(`Package scanned successfully!`);
+      alert("Package scanned successfully!");
     } catch (err) {
       console.error("Image upload error:", err);
       setScanError("Could not read QR from image. Please try another image.");
@@ -156,7 +139,6 @@ const QrScanner = () => {
     }
   };
 
-  // ✅ FIXED: Manual package scanning
   const addManually = async () => {
     if (!can("manage_deliveries")) {
       alert("You don't have permission to scan packages");
@@ -169,7 +151,7 @@ const QrScanner = () => {
     }
 
     setAddingManually(true);
-    setScanError(""); // Clear previous errors
+    setScanError("");
 
     try {
       const location = await geocodeAddressWithTimeout(manualAddress.trim());
@@ -182,51 +164,43 @@ const QrScanner = () => {
         customerEmail: customerEmail.trim(),
       };
 
-      // ✅ USE THE NEW API
       const response = await deliveryAPI.scanPackage(stopData);
       const savedStop = response.data.data;
       prependStop(savedStop);
 
       alert(`"${savedStop.name}" added to your delivery list!`);
 
-      // Clear form
       setName("");
       setManualAddress("");
       setCustomerEmail("");
-
-    } catch (error) {
-      console.error("Manual scan error:", error);
-      const errorMessage =
-        error.response?.data?.error ||
-        "Failed to scan package. Please try again.";
+    } catch (scanErr) {
+      console.error("Manual scan error:", scanErr);
+      const errorMessage = scanErr.response?.data?.error || "Failed to scan package. Please try again.";
       setScanError(errorMessage);
     } finally {
       setAddingManually(false);
     }
   };
 
-  // ✅ FIXED: Delete stop function
-  const handleDeleteStop = async (id, name) => {
+  const handleDeleteStop = async (id, stopName) => {
     if (!can("delete_own_records")) {
       alert("You don't have permission to delete delivery stops");
       return;
     }
 
-    if (!window.confirm(`Are you sure you want to delete "${name}"?`)) {
+    if (!window.confirm(`Are you sure you want to delete "${stopName}"?`)) {
       return;
     }
 
     try {
       await deleteStop(id);
-      alert(`"${name}" deleted successfully!`);
-    } catch (error) {
-      const errorMessage =
-        error.response?.data?.error || "Failed to delete stop.";
+      alert(`"${stopName}" deleted successfully!`);
+    } catch (deleteErr) {
+      const errorMessage = deleteErr.response?.data?.error || "Failed to delete stop.";
       alert(errorMessage);
     }
   };
 
-  // Show errors from useDeliveryStops hook
   useEffect(() => {
     if (error) {
       alert(error);
@@ -236,100 +210,90 @@ const QrScanner = () => {
 
   return (
     <Layout>
-      <div className="min-h-[calc(100vh-130px)] bg-gradient-to-br from-emerald-50 to-sky-100/40 flex flex-col items-center py-10 px-4 sm:px-6 lg:px-8 space-y-6">
-        <h2 className="text-4xl font-extrabold text-gray-900 text-center tracking-tight">
-          Package Scanner
-        </h2>
-
-        {/* ✅ Permission notice for viewers */}
-        {!can("scan_qr") && !can("manage_deliveries") && (
-          <div className="w-full max-w-md bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
-            <p className="text-blue-700 font-semibold">👀 View Only Mode</p>
-            <p className="text-blue-600 text-sm mt-1">
-              You have view-only access. Contact an administrator to add or
-              manage delivery stops.
-            </p>
+      <section className="min-h-[calc(100vh-130px)] bg-gradient-to-br from-emerald-50 via-white to-sky-50 py-6 sm:py-8">
+        <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-5 px-4 sm:px-6 lg:px-8">
+          <div className="w-full rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm sm:p-6">
+            <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">Package Scanner</h2>
+            <p className="mt-1 text-sm text-slate-600 sm:text-base">Scan by camera, upload image, or add package details manually.</p>
           </div>
-        )}
 
-        {/* ✅ Display scan errors */}
-        <ErrorDisplay error={scanError} onDismiss={() => setScanError("")} />
+          {!can("scan_qr") && !can("manage_deliveries") && (
+            <div className="w-full max-w-2xl rounded-xl border border-sky-200 bg-sky-50 p-4 text-center">
+              <p className="font-semibold text-sky-800">View only mode</p>
+              <p className="mt-1 text-sm text-sky-700">You have view-only access. Contact an administrator to add or manage delivery stops.</p>
+            </div>
+          )}
 
-        <ScannerControls
-          scanning={scanning}
-          onToggleScan={() => {
-            if (!isProcessingScan) toggleScanning();
-          }}
-          onImageUpload={handleImageUpload}
-          canScan={can("scan_qr")}
-          canUpload={can("scan_qr")}
-        />
+          <ErrorDisplay error={scanError} onDismiss={() => setScanError("")} />
 
-        {scanning && <div id={regionId} className="mt-4" />}
-        <div id="upload-region" style={{ display: "none" }} />
-
-        {/* ✅ Only show manual form if user has permission */}
-        {can("manage_deliveries") && (
-          <ManualForm
-            name={name}
-            address={manualAddress}
-            customerEmail={customerEmail}
-            onNameChange={(e) => setName(e.target.value)}
-            onAddressChange={(e) => setManualAddress(e.target.value)}
-            onCustomerEmailChange={(e) => setCustomerEmail(e.target.value)}
-            onSubmit={addManually}
-            loading={loading || addingManually}
+          <ScannerControls
+            scanning={scanning}
+            onToggleScan={() => {
+              if (!isProcessingScan) toggleScanning();
+            }}
+            onImageUpload={handleImageUpload}
+            canScan={can("scan_qr")}
+            canUpload={can("scan_qr")}
           />
-        )}
 
-        <StopsList
-          stops={stops}
-          onDeleteStop={handleDeleteStop}
-          loading={loading}
-          canDelete={can("delete_own_records")}
-        />
+          {scanning && (
+            <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div id={regionId} className="mx-auto w-full" />
+            </div>
+          )}
+          <div id="upload-region" style={{ display: "none" }} />
 
-        {/* ✅ Only show ready button if user has stops */}
-        {stops.length > 0 && (
-          <div className="w-full flex justify-center pb-10">
-            <button
-              onClick={async () => {
-                setNotifying(true);
-                try {
-                  const response = await deliveryAPI.notifyReady();
-                  alert(
-                    response.data.message ||
-                      `Ready for delivery! ${stops.length} customers notified.`
-                  );
-                } catch (error) {
-                  console.error("Notify ready error:", error);
-                  const errorMessage =
-                    error.response?.data?.error ||
-                    "Failed to notify customers about delivery start.";
-                  alert(errorMessage);
-                } finally {
-                  setNotifying(false);
-                }
-              }}
-              disabled={notifying}
-              className={`w-full max-w-lg bg-indigo-600 shadow-xl border border-indigo-700 font-extrabold text-white px-10 py-4 rounded-2xl transition-all duration-300 transform ${
-                notifying
-                  ? "opacity-70 cursor-not-allowed"
-                  : "hover:bg-indigo-700 hover:scale-105 active:scale-95"
-              }`}
-            >
-              {notifying ? (
-                <div className="flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
-                  Preparing...
-                </div>
-              ) : (
-                `🚀 ✅ Ready for Delivery (${stops.length} packages loaded)`
-              )}
-            </button>
-          </div>
-        )}
-      </div>
+          {can("manage_deliveries") && (
+            <ManualForm
+              name={name}
+              address={manualAddress}
+              customerEmail={customerEmail}
+              onNameChange={(e) => setName(e.target.value)}
+              onAddressChange={(e) => setManualAddress(e.target.value)}
+              onCustomerEmailChange={(e) => setCustomerEmail(e.target.value)}
+              onSubmit={addManually}
+              loading={loading || addingManually}
+            />
+          )}
+
+          <StopsList
+            stops={stops}
+            onDeleteStop={handleDeleteStop}
+            loading={loading}
+            canDelete={can("delete_own_records")}
+          />
+
+          {stops.length > 0 && (
+            <div className="w-full pb-8">
+              <button
+                onClick={async () => {
+                  setNotifying(true);
+                  try {
+                    const response = await deliveryAPI.notifyReady();
+                    alert(response.data.message || `Ready for delivery! ${stops.length} customers notified.`);
+                  } catch (notifyErr) {
+                    console.error("Notify ready error:", notifyErr);
+                    const errorMessage =
+                      notifyErr.response?.data?.error ||
+                      "Failed to notify customers about delivery start.";
+                    alert(errorMessage);
+                  } finally {
+                    setNotifying(false);
+                  }
+                }}
+                disabled={notifying}
+                className={`mx-auto block w-full max-w-2xl rounded-2xl border px-6 py-4 text-sm font-extrabold text-white shadow-sm transition sm:text-base ${
+                  notifying
+                    ? "cursor-not-allowed border-indigo-400 bg-indigo-400"
+                    : "border-indigo-700 bg-indigo-600 hover:bg-indigo-700"
+                }`}
+              >
+                {notifying ? "Preparing..." : `Ready for Delivery (${stops.length} packages loaded)`}
+              </button>
+            </div>
+          )}
+        </div>
+      </section>
     </Layout>
   );
 };

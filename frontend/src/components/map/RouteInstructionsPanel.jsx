@@ -16,23 +16,23 @@ const RouteInstructionsPanel = ({
   if (!isRoutingActive || !instructions.length) return null;
 
   return (
-    <div className="absolute top-8 right-8 bg-white p-3 rounded-lg shadow-xl border border-gray-200 z-[5000] w-[320px] max-h-[360px] overflow-y-auto">
+    <div className="absolute right-3 top-18 z-[5000] w-[calc(100%-1.5rem)] max-w-sm overflow-y-auto rounded-xl border border-slate-200 bg-white p-3 shadow-xl sm:right-8 sm:top-8 sm:w-[320px]">
       <div className="flex items-center justify-between mb-2">
-        <h4 className="font-bold text-gray-800">Turn-by-Turn</h4>
+        <h4 className="font-bold text-slate-800">Turn-by-Turn</h4>
         <button
           onClick={onClose}
-          className="text-gray-500 hover:text-gray-700 text-xl leading-none font-bold px-1"
+          className="px-1 text-2xl font-bold leading-none text-slate-500 hover:text-slate-700"
           aria-label="Close directions"
         >
           x
         </button>
       </div>
-      <ol className="text-sm space-y-2">
+      <ol className="space-y-2 text-sm">
         {instructions.map((step, index) => (
-          <li key={`${step.text}-${index}`} className="border-b border-gray-100 pb-2">
-            <p className="text-gray-800">{step.text}</p>
+          <li key={`${step.text}-${index}`} className="border-b border-slate-100 pb-2">
+            <p className="text-slate-800">{step.text}</p>
             {step.distance > 0 && (
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="mt-1 text-xs text-slate-500">
                 In {formatDistance(step.distance)}
               </p>
             )}

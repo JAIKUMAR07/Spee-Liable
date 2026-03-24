@@ -1,13 +1,33 @@
 import React, { useState, useEffect } from "react";
 import Layout from "../layout/Layout";
 import { useAuth } from "../../context/AuthContext";
-import { usersAPI } from "../../utils/apiClient"; // Import users API
+import { usersAPI } from "../../utils/apiClient";
+
+const STAT_CARDS = [
+  { role: "all", label: "Total Users", tone: "indigo" },
+  { role: "admin", label: "Admins", tone: "violet" },
+  { role: "driver", label: "Drivers", tone: "emerald" },
+  { role: "customer", label: "Customers", tone: "sky" },
+];
+
+const toneClasses = {
+  indigo: "border-indigo-200 bg-indigo-50 text-indigo-700",
+  violet: "border-violet-200 bg-violet-50 text-violet-700",
+  emerald: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  sky: "border-sky-200 bg-sky-50 text-sky-700",
+};
+
+const roleBadge = {
+  admin: "bg-violet-100 text-violet-700",
+  driver: "bg-emerald-100 text-emerald-700",
+  customer: "bg-sky-100 text-sky-700",
+};
 
 const UserManagement = () => {
   const { user } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filterRole, setFilterRole] = useState("all"); // 'all', 'driver', 'customer', 'admin'
+  const [filterRole, setFilterRole] = useState("all");
 
   const fetchUsers = async () => {
     try {
@@ -29,9 +49,7 @@ const UserManagement = () => {
   const handleRoleChange = async (userId, newRole) => {
     try {
       await usersAPI.updateRole(userId, newRole);
-      setUsers((prev) =>
-        prev.map((u) => (u._id === userId ? { ...u, role: newRole } : u))
-      );
+      setUsers((prev) => prev.map((u) => (u._id === userId ? { ...u, role: newRole } : u)));
     } catch (error) {
       alert(error.response?.data?.error || "Failed to update role");
     }
@@ -40,26 +58,21 @@ const UserManagement = () => {
   const handleStatusChange = async (userId, isActive) => {
     try {
       await usersAPI.updateStatus(userId, isActive);
-      setUsers((prev) =>
-        prev.map((u) => (u._id === userId ? { ...u, isActive } : u))
-      );
+      setUsers((prev) => prev.map((u) => (u._id === userId ? { ...u, isActive } : u)));
     } catch (error) {
       alert(error.response?.data?.error || "Failed to update status");
     }
   };
 
-  const filteredUsers = users.filter((u) => {
-    if (filterRole === "all") return true;
-    return u.role === filterRole;
-  });
+  const filteredUsers = users.filter((u) => (filterRole === "all" ? true : u.role === filterRole));
 
   if (loading) {
     return (
       <Layout>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex min-h-[calc(100vh-130px)] items-center justify-center px-4">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading users...</p>
+            <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-indigo-600" />
+            <p className="mt-4 text-slate-600">Loading users...</p>
           </div>
         </div>
       </Layout>
@@ -68,146 +81,114 @@ const UserManagement = () => {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-sky-100/40 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              User Management
-            </h1>
-            <p className="text-gray-600">
-              Manage all registered users in the system
-            </p>
+      <section className="min-h-[calc(100vh-130px)] bg-gradient-to-br from-emerald-50 via-white to-sky-50 py-6 sm:py-8">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">User Management</h1>
+            <p className="mt-1 text-sm text-slate-600 sm:text-base">Manage user roles and account status.</p>
           </div>
 
-          {/* Stats & Filters */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div 
-              className={`bg-white rounded-lg shadow-md p-6 text-center cursor-pointer transition border-2 ${filterRole === 'all' ? 'border-indigo-500 bg-indigo-50' : 'border-transparent hover:border-indigo-200'}`} 
-              onClick={() => setFilterRole('all')}
-            >
-              <div className="text-2xl font-bold text-indigo-600">{users.length}</div>
-              <div className="text-gray-600 font-medium">Total Users</div>
-            </div>
-            
-            <div 
-              className={`bg-white rounded-lg shadow-md p-6 text-center cursor-pointer transition border-2 ${filterRole === 'admin' ? 'border-purple-500 bg-purple-50' : 'border-transparent hover:border-purple-200'}`} 
-              onClick={() => setFilterRole('admin')}
-            >
-              <div className="text-2xl font-bold text-purple-600">{users.filter((u) => u.role === "admin").length}</div>
-              <div className="text-gray-600 font-medium">Admins</div>
-            </div>
-            
-            <div 
-              className={`bg-white rounded-lg shadow-md p-6 text-center cursor-pointer transition border-2 ${filterRole === 'driver' ? 'border-green-500 bg-green-50' : 'border-transparent hover:border-green-200'}`} 
-              onClick={() => setFilterRole('driver')}
-            >
-              <div className="text-2xl font-bold text-green-600">{users.filter((u) => u.role === "driver").length}</div>
-              <div className="text-gray-600 font-medium">Delivery Drivers</div>
-            </div>
-            
-            <div 
-              className={`bg-white rounded-lg shadow-md p-6 text-center cursor-pointer transition border-2 ${filterRole === 'customer' ? 'border-blue-500 bg-blue-50' : 'border-transparent hover:border-blue-200'}`} 
-              onClick={() => setFilterRole('customer')}
-            >
-              <div className="text-2xl font-bold text-blue-600">{users.filter((u) => u.role === "customer").length}</div>
-              <div className="text-gray-600 font-medium">Customers</div>
-            </div>
+          <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {STAT_CARDS.map((card) => {
+              const count = card.role === "all" ? users.length : users.filter((u) => u.role === card.role).length;
+              const active = filterRole === card.role;
+
+              return (
+                <button
+                  key={card.role}
+                  onClick={() => setFilterRole(card.role)}
+                  className={`rounded-xl border p-4 text-left shadow-sm transition ${
+                    active ? toneClasses[card.tone] : "border-slate-200 bg-white hover:border-slate-300"
+                  }`}
+                >
+                  <p className="text-2xl font-extrabold">{count}</p>
+                  <p className="text-sm font-semibold">{card.label}</p>
+                </button>
+              );
+            })}
           </div>
 
-          {/* Users List */}
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-              <h2 className="text-lg font-semibold text-gray-800">
-                {filterRole === 'all' ? "All Registered Users" : `Registered ${filterRole.charAt(0).toUpperCase() + filterRole.slice(1)}s`}
-              </h2>
-            </div>
-            <div className="divide-y divide-gray-200">
-              {filteredUsers.length === 0 ? (
-                <div className="px-6 py-8 text-center text-gray-500">
-                  No users found in this category.
-                </div>
-              ) : (
-                filteredUsers.map((userItem) => (
-                  <div key={userItem._id} className="px-6 py-4 hover:bg-gray-50 transition">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
-                          <span className="text-indigo-600 font-bold">
-                            {userItem.name.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-800">
-                            {userItem.name} {user.id === userItem._id && <span className="text-indigo-500 text-xs ml-1">(You)</span>}
-                          </h3>
-                          <p className="text-gray-500 text-sm">
-                            {userItem.email}
-                          </p>
-                          <div className="flex items-center space-x-2 mt-1">
-                            <span
-                              className={`px-2 py-[2px] rounded-full text-xs font-semibold ${
-                                userItem.role === "admin"
-                                  ? "bg-purple-100 text-purple-800"
-                                  : userItem.role === "driver"
-                                    ? "bg-green-100 text-green-800"
-                                    : "bg-blue-100 text-blue-800"
-                              }`}
-                            >
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+            <h2 className="mb-4 text-lg font-bold text-slate-800 sm:text-xl">
+              {filterRole === "all"
+                ? "All Registered Users"
+                : `${filterRole.charAt(0).toUpperCase() + filterRole.slice(1)} Users`}
+            </h2>
+
+            {filteredUsers.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-slate-600">
+                No users found in this category.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {filteredUsers.map((userItem) => {
+                  const isCurrentUser = user.id === userItem._id;
+                  return (
+                    <article key={userItem._id} className="rounded-xl border border-slate-200 bg-white p-4">
+                      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="truncate text-base font-bold text-slate-900 sm:text-lg">{userItem.name}</h3>
+                            {isCurrentUser && (
+                              <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-bold text-indigo-700">
+                                You
+                              </span>
+                            )}
+                          </div>
+                          <p className="truncate text-sm text-slate-600">{userItem.email}</p>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            <span className={`rounded-full px-2.5 py-1 text-xs font-bold capitalize ${roleBadge[userItem.role] || "bg-slate-100 text-slate-700"}`}>
                               {userItem.role}
                             </span>
                             <span
-                              className={`px-2 py-[2px] rounded-full text-xs font-semibold ${
-                                userItem.isActive
-                                  ? "bg-emerald-100 text-emerald-800"
-                                  : "bg-red-100 text-red-800"
+                              className={`rounded-full px-2.5 py-1 text-xs font-bold ${
+                                userItem.isActive ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
                               }`}
                             >
                               {userItem.isActive ? "Active" : "Deactivated"}
                             </span>
                           </div>
                         </div>
+
+                        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+                          <select
+                            value={userItem.role}
+                            onChange={(e) => handleRoleChange(userItem._id, e.target.value)}
+                            disabled={isCurrentUser}
+                            className={`rounded-lg border px-3 py-2 text-sm font-semibold outline-none focus:ring-2 focus:ring-indigo-500 ${
+                              isCurrentUser
+                                ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
+                                : "border-slate-300 bg-white text-slate-700"
+                            }`}
+                          >
+                            <option value="customer">Customer</option>
+                            <option value="driver">Driver</option>
+                            <option value="admin">Admin</option>
+                          </select>
+
+                          <button
+                            onClick={() => handleStatusChange(userItem._id, !userItem.isActive)}
+                            disabled={isCurrentUser}
+                            className={`rounded-lg border px-4 py-2 text-sm font-bold transition ${
+                              isCurrentUser
+                                ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
+                                : userItem.isActive
+                                ? "border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
+                                : "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                            }`}
+                          >
+                            {userItem.isActive ? "Deactivate" : "Activate"}
+                          </button>
+                        </div>
                       </div>
-                      
-                      <div className="flex items-center space-x-3">
-                        <select
-                          value={userItem.role}
-                          onChange={(e) =>
-                            handleRoleChange(userItem._id, e.target.value)
-                          }
-                          disabled={user.id === userItem._id} // Prevent changing own role
-                          className={`border rounded px-3 py-1.5 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none ${
-                            user.id === userItem._id ? "bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200" : "bg-white border-gray-300 text-gray-700"
-                          }`}
-                        >
-                          <option value="customer">Customer</option>
-                          <option value="driver">Driver</option>
-                          <option value="admin">Admin</option>
-                        </select>
-                        <button
-                          onClick={() =>
-                            handleStatusChange(userItem._id, !userItem.isActive)
-                          }
-                          disabled={user.id === userItem._id} // Prevent deactivating own account
-                          className={`px-3 py-1.5 rounded text-sm font-bold transition w-28 text-center border ${
-                            user.id === userItem._id 
-                              ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-                              : userItem.isActive
-                                ? "bg-red-50 text-red-600 hover:bg-red-100 border-red-200"
-                                : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border-emerald-200"
-                          }`}
-                        >
-                          {userItem.isActive ? "Deactivate" : "Activate"}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
-      </div>
+      </section>
     </Layout>
   );
 };

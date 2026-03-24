@@ -1,17 +1,16 @@
-// components/qr_scanner/components/ErrorDisplay.jsx
 import React from "react";
 
 const ErrorDisplay = ({ error, onDismiss }) => {
   if (!error) return null;
 
   return (
-    <div className="p-2 bg-red-100 text-red-700 rounded-md border border-red-300 w-full max-w-md text-center">
+    <div className="w-full max-w-2xl rounded-lg border border-rose-300 bg-rose-100 p-3 text-center text-sm font-medium text-rose-700">
       {error}
-      <button onClick={onDismiss} className="ml-2 text-red-800 font-bold">
-        ×
+      <button onClick={onDismiss} className="ml-3 rounded px-2 py-0.5 font-bold text-rose-800 hover:bg-rose-200">
+        x
       </button>
     </div>
   );
 };
 
-export default ErrorDisplay; // ✅ Change to default export
+export default ErrorDisplay;

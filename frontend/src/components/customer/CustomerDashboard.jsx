@@ -1,61 +1,47 @@
 import React, { useState, useEffect } from "react";
 import Layout from "../layout/Layout";
 import { useAuth } from "../../context/AuthContext";
-
 import { useSocket } from "../../context/SocketContext";
 import { notificationAPI, customerAPI } from "../../utils/notificationAPI";
 
 const CustomerDashboard = () => {
   const { user } = useAuth();
-  const socket = useSocket(); // ADD THIS
+  const socket = useSocket();
   const [activeTab, setActiveTab] = useState("notifications");
   const [notifications, setNotifications] = useState([]);
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Fetch notifications
   const fetchNotifications = async () => {
     try {
       setLoading(true);
       const response = await notificationAPI.getNotifications();
       setNotifications(response.data.data);
-    } catch (error) {
-      console.error("Error fetching notifications:", error);
+    } catch {
       alert("Failed to load notifications");
     } finally {
       setLoading(false);
     }
   };
 
-  // Fetch packages
   const fetchPackages = async () => {
     try {
       setLoading(true);
       const response = await customerAPI.getMyPackages();
       setPackages(response.data.data);
-    } catch (error) {
-      console.error("Error fetching packages:", error);
+    } catch {
       alert("Failed to load packages");
     } finally {
       setLoading(false);
     }
   };
 
-  // Update package status
-  // Update package status WITH REAL-TIME UPDATES
   const handleStatusUpdate = async (packageId, newStatus) => {
     try {
-      // Update on server
       await customerAPI.updatePackageAvailability(packageId, newStatus);
 
-      // Update local state optimistically
-      setPackages((prev) =>
-        prev.map((pkg) =>
-          pkg._id === packageId ? { ...pkg, available: newStatus } : pkg,
-        ),
-      );
+      setPackages((prev) => prev.map((pkg) => (pkg._id === packageId ? { ...pkg, available: newStatus } : pkg)));
 
-      // ✅ EMIT SOCKET EVENT FOR REAL-TIME UPDATE
       if (socket) {
         socket.emit("package-status-updated", {
           packageId,
@@ -63,46 +49,32 @@ const CustomerDashboard = () => {
           customerId: user.id,
           customerName: user.name,
         });
-        console.log(
-          `📤 Emitted package status update: ${packageId} -> ${newStatus}`,
-        );
-      } else {
-        console.warn("Socket not available for real-time update");
       }
 
+      await fetchNotifications();
       alert(`Package marked as ${newStatus}`);
-
-      // Refresh notifications to show status update
-      fetchNotifications();
-    } catch (error) {
-      console.error("Error updating package:", error);
+    } catch {
       alert("Failed to update package status");
     }
   };
-  // Mark notification as read
+
   const handleMarkAsRead = async (notificationId) => {
     try {
       await notificationAPI.markAsRead(notificationId);
       setNotifications((prev) =>
-        prev.map((notif) =>
-          notif._id === notificationId ? { ...notif, isRead: true } : notif,
-        ),
+        prev.map((notif) => (notif._id === notificationId ? { ...notif, isRead: true } : notif))
       );
-    } catch (error) {
-      console.error("Error marking notification as read:", error);
+    } catch {
+      // no-op
     }
   };
 
   const handleDeleteNotification = async (notificationId) => {
     try {
       const response = await notificationAPI.deleteNotification(notificationId);
-      if (!response?.data?.success) {
-        throw new Error(response?.data?.error || "Delete failed");
-      }
-      // Sync list from backend to guarantee DB/UI consistency.
+      if (!response?.data?.success) throw new Error("Delete failed");
       await fetchNotifications();
-    } catch (error) {
-      console.error("Error deleting notification:", error);
+    } catch {
       alert("Failed to delete notification");
     }
   };
@@ -110,55 +82,49 @@ const CustomerDashboard = () => {
   useEffect(() => {
     if (activeTab === "notifications") {
       fetchNotifications();
-    } else if (activeTab === "packages") {
+    } else {
       fetchPackages();
     }
   }, [activeTab]);
 
   return (
     <Layout>
-      <div className="min-h-[calc(100vh-130px)] bg-gradient-to-br from-emerald-50 to-sky-100/40 py-8">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header */}
-          <div className="text-center mb-10">
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-2 tracking-tight">
-              Welcome, <span className="text-indigo-600">{user?.name}</span>!
+      <section className="min-h-[calc(100vh-132px)] bg-gradient-to-br from-emerald-50 via-white to-sky-50 py-6 sm:py-8">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm sm:p-6">
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+              Welcome, <span className="text-indigo-700">{user?.name}</span>
             </h1>
-            <p className="text-gray-500 font-medium text-lg">
-              Track your packages and manage delivery notifications
-            </p>
+            <p className="mt-1 text-sm text-slate-600 sm:text-base">Track your packages and manage delivery notifications.</p>
           </div>
 
-          {/* Tabs */}
-          <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-gray-100 mb-6 overflow-hidden">
-            <div className="bg-gray-50/50 border-b border-gray-100 px-2 pt-2">
-              <nav className="flex space-x-4 px-4">
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="border-b border-slate-200 bg-slate-50 p-2">
+              <nav className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <button
                   onClick={() => setActiveTab("notifications")}
-                  className={`py-4 px-6 text-center border-b-[3px] font-bold text-sm transition-colors ${
+                  className={`rounded-xl px-4 py-3 text-sm font-bold transition ${
                     activeTab === "notifications"
-                      ? "border-indigo-600 text-indigo-700 bg-white rounded-t-lg"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                      ? "border border-indigo-200 bg-indigo-50 text-indigo-700"
+                      : "border border-transparent bg-white text-slate-600 hover:border-slate-300 hover:text-slate-800"
                   }`}
                 >
-                  🔔 Notifications (
-                  {notifications.filter((n) => !n.isRead).length})
+                  Notifications ({notifications.filter((n) => !n.isRead).length})
                 </button>
                 <button
                   onClick={() => setActiveTab("packages")}
-                  className={`py-4 px-6 text-center border-b-[3px] font-bold text-sm transition-colors ${
+                  className={`rounded-xl px-4 py-3 text-sm font-bold transition ${
                     activeTab === "packages"
-                      ? "border-indigo-600 text-indigo-700 bg-white rounded-t-lg"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                      ? "border border-indigo-200 bg-indigo-50 text-indigo-700"
+                      : "border border-transparent bg-white text-slate-600 hover:border-slate-300 hover:text-slate-800"
                   }`}
                 >
-                  📦 My Packages ({packages.length})
+                  My Packages ({packages.length})
                 </button>
               </nav>
             </div>
 
-            {/* Tab Content */}
-            <div className="p-6 md:p-8">
+            <div className="p-4 sm:p-6 md:p-8">
               {activeTab === "notifications" && (
                 <NotificationsTab
                   notifications={notifications}
@@ -168,111 +134,93 @@ const CustomerDashboard = () => {
                 />
               )}
               {activeTab === "packages" && (
-                <PackagesTab
-                  packages={packages}
-                  loading={loading}
-                  onStatusUpdate={handleStatusUpdate}
-                />
+                <PackagesTab packages={packages} loading={loading} onStatusUpdate={handleStatusUpdate} />
               )}
             </div>
           </div>
         </div>
-      </div>
+      </section>
     </Layout>
   );
 };
 
-// Notifications Tab Component
-const NotificationsTab = ({
-  notifications,
-  loading,
-  onMarkAsRead,
-  onDeleteNotification,
-}) => {
-  if (loading) {
-    return (
-      <div className="text-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-        <p className="mt-2 text-gray-600">Loading notifications...</p>
-      </div>
-    );
-  }
+const LoadingState = ({ label }) => (
+  <div className="py-8 text-center">
+    <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-indigo-600" />
+    <p className="mt-2 text-slate-600">{label}</p>
+  </div>
+);
+
+const EmptyState = ({ label }) => (
+  <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-slate-600">
+    {label}
+  </div>
+);
+
+const NotificationsTab = ({ notifications, loading, onMarkAsRead, onDeleteNotification }) => {
+  if (loading) return <LoadingState label="Loading notifications..." />;
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold text-gray-800">Your Notifications</h2>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-xl font-extrabold text-slate-900">Your Notifications</h2>
         {notifications.some((n) => !n.isRead) && (
           <button
-            onClick={() =>
-              notifications.forEach((n) => !n.isRead && onMarkAsRead(n._id))
-            }
-            className="text-sm text-indigo-600 hover:text-indigo-800"
+            onClick={() => notifications.forEach((n) => !n.isRead && onMarkAsRead(n._id))}
+            className="text-sm font-bold text-indigo-700 hover:text-indigo-900"
           >
             Mark all as read
           </button>
         )}
       </div>
-      <div className="space-y-4">
+
+      <div className="space-y-3">
         {notifications.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <div className="text-4xl mb-2">🔔</div>
-            <p>No notifications yet</p>
-            <p className="text-sm mt-1">
-              You'll get notifications when drivers scan your packages
-            </p>
-          </div>
+          <EmptyState label="No notifications yet." />
         ) : (
           notifications.map((notification) => (
-            <div
+            <article
               key={notification._id}
-              className={`p-5 rounded-xl cursor-pointer transition-all duration-200 shadow-sm border ${
+              className={`cursor-pointer rounded-xl border p-4 transition sm:p-5 ${
                 notification.isRead
-                  ? "bg-white border-gray-100 hover:bg-gray-50 hover:shadow-md"
-                  : "bg-indigo-50/50 border-indigo-100 hover:bg-indigo-50 hover:shadow-md"
+                  ? "border-slate-200 bg-white hover:bg-slate-50"
+                  : "border-indigo-200 bg-indigo-50/60 hover:bg-indigo-50"
               }`}
-              onClick={() =>
-                !notification.isRead && onMarkAsRead(notification._id)
-              }
+              onClick={() => !notification.isRead && onMarkAsRead(notification._id)}
             >
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-800">
-                    {notification.title}
-                  </h3>
-                  <p className="text-gray-600 mt-1">{notification.message}</p>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-bold text-slate-900">{notification.title}</h3>
+                  <p className="mt-1 text-sm text-slate-700">{notification.message}</p>
                   {notification.deliveryStop && (
-                    <p className="text-sm text-gray-500 mt-2">
-                      Package: {notification.deliveryStop.name}
-                    </p>
+                    <p className="mt-2 text-xs text-slate-600">Package: {notification.deliveryStop.name}</p>
                   )}
-                  <p className="text-sm text-gray-500 mt-1">
-                    {new Date(notification.createdAt).toLocaleString()}
-                  </p>
+                  <p className="mt-1 text-xs text-slate-500">{new Date(notification.createdAt).toLocaleString()}</p>
                 </div>
+
                 {!notification.isRead && (
-                  <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full ml-2">
-                    New
-                  </span>
+                  <span className="inline-flex rounded-full bg-indigo-600 px-2.5 py-1 text-xs font-bold text-white">New</span>
                 )}
-              </div>{" "}
+              </div>
+
               <div className="mt-3 flex justify-end">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     onDeleteNotification(notification._id);
                   }}
-                  className="text-xs font-semibold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 px-3 py-1.5 rounded-md transition"
+                  className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-700 transition hover:bg-rose-100"
                 >
                   Delete
                 </button>
               </div>
+
               {notification.actionRequired && (
-                <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-yellow-700 text-sm">
-                  ⚠️ Action required: Please update your package availability
+                <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-2 text-sm text-amber-700">
+                  Action required: Please update your package availability.
                 </div>
               )}
-            </div>
+            </article>
           ))
         )}
       </div>
@@ -280,69 +228,49 @@ const NotificationsTab = ({
   );
 };
 
-// Packages Tab Component
 const PackagesTab = ({ packages, loading, onStatusUpdate }) => {
-  if (loading) {
-    return (
-      <div className="text-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-        <p className="mt-2 text-gray-600">Loading packages...</p>
-      </div>
-    );
-  }
+  if (loading) return <LoadingState label="Loading packages..." />;
 
   return (
     <div>
-      <h2 className="text-xl font-bold text-gray-800 mb-4">Your Packages</h2>
-      <div className="space-y-4">
+      <h2 className="mb-4 text-xl font-extrabold text-slate-900">Your Packages</h2>
+      <div className="space-y-3">
         {packages.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <div className="text-4xl mb-2">📦</div>
-            <p>No packages yet</p>
-            <p className="text-sm mt-1">
-              Your packages will appear here once scanned by delivery drivers
-            </p>
-          </div>
+          <EmptyState label="No packages yet." />
         ) : (
           packages.map((pkg) => (
-            <div
-              key={pkg._id}
-              className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow ring-1 ring-gray-50"
-            >
-              <div className="flex justify-between items-start">
+            <article key={pkg._id} className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex-1">
-                  <h3 className="font-semibold text-gray-800">{pkg.name}</h3>
-                  <p className="text-gray-600 text-sm mt-1">{pkg.address}</p>
-                  {pkg.assignedTo && (
-                    <p className="text-sm text-gray-500 mt-1">
-                      Driver: {pkg.assignedTo.name}
-                    </p>
-                  )}
-                  <div className="flex items-center mt-2 space-x-2">
+                  <h3 className="font-bold text-slate-900">{pkg.name}</h3>
+                  <p className="mt-1 text-sm text-slate-700">{pkg.address}</p>
+                  {pkg.assignedTo && <p className="mt-1 text-sm text-slate-600">Driver: {pkg.assignedTo.name}</p>}
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
                     <span
-                      className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                      className={`rounded-full px-2.5 py-1 text-xs font-bold ${
                         pkg.available === "available"
-                          ? "bg-green-100 text-green-800"
+                          ? "bg-emerald-100 text-emerald-700"
                           : pkg.available === "unavailable"
-                            ? "bg-red-100 text-red-800"
-                            : "bg-yellow-100 text-yellow-800"
+                          ? "bg-rose-100 text-rose-700"
+                          : "bg-amber-100 text-amber-700"
                       }`}
                     >
                       {pkg.available}
                     </span>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-slate-500">
                       Scanned: {new Date(pkg.createdAt).toLocaleDateString()}
                     </span>
                   </div>
                 </div>
-                <div className="flex space-x-2">
+
+                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
                   <button
                     onClick={() => onStatusUpdate(pkg._id, "available")}
                     disabled={pkg.available === "available"}
-                    className={`px-3 py-1 rounded text-sm font-semibold ${
+                    className={`rounded-lg px-3 py-2 text-sm font-bold ${
                       pkg.available === "available"
-                        ? "bg-green-300 text-white cursor-not-allowed"
-                        : "bg-green-500 hover:bg-green-600 text-white"
+                        ? "cursor-not-allowed bg-emerald-200 text-emerald-700"
+                        : "bg-emerald-600 text-white hover:bg-emerald-700"
                     }`}
                   >
                     Available
@@ -350,24 +278,17 @@ const PackagesTab = ({ packages, loading, onStatusUpdate }) => {
                   <button
                     onClick={() => onStatusUpdate(pkg._id, "unavailable")}
                     disabled={pkg.available === "unavailable"}
-                    className={`px-3 py-1 rounded text-sm font-semibold ${
+                    className={`rounded-lg px-3 py-2 text-sm font-bold ${
                       pkg.available === "unavailable"
-                        ? "bg-red-300 text-white cursor-not-allowed"
-                        : "bg-red-500 hover:bg-red-600 text-white"
+                        ? "cursor-not-allowed bg-rose-200 text-rose-700"
+                        : "bg-rose-600 text-white hover:bg-rose-700"
                     }`}
                   >
                     Unavailable
                   </button>
                 </div>
               </div>
-              <div className="mt-3 text-sm text-gray-600">
-                <p>
-                  <strong>Note:</strong> Packages marked as "available" will
-                  appear on delivery maps. "Unavailable" packages will be hidden
-                  from drivers until marked available.
-                </p>
-              </div>
-            </div>
+            </article>
           ))
         )}
       </div>

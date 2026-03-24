@@ -3,10 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 const Login = () => {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -17,19 +14,12 @@ const Login = () => {
   const from = location.state?.from?.pathname || "/";
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-    // Clear error when user starts typing
+    setFormData({ ...formData, [e.target.name]: e.target.value });
     if (error) setError("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("🔄 Login attempt started...");
-    console.log("📧 Email:", formData.email);
-    // Basic validation
     if (!formData.email || !formData.password) {
       setError("Please fill in all fields");
       return;
@@ -39,181 +29,121 @@ const Login = () => {
     setError("");
 
     try {
-      console.log("🚀 Calling login function...");
       const result = await login(formData.email, formData.password);
-      console.log("📥 Login result:", result);
-
       if (result.success) {
-        console.log("✅ Login successful, navigating to:", from);
         navigate(from, { replace: true });
       } else {
-        console.log("❌ Login failed:", result.error);
         setError(result.error);
       }
-    } catch (err) {
-      console.log("💥 Login error:", err);
+    } catch {
       setError("An unexpected error occurred");
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ Demo account quick fill
   const fillDemoAccount = (email, password) => {
     setFormData({ email, password });
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+    <section className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-sky-50 px-4 py-10 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+        <h2 className="text-center text-2xl font-extrabold text-slate-900 sm:text-3xl">
           Sign in to Speeliable
         </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
+        <p className="mt-2 text-center text-sm text-slate-600">
           Or{" "}
-          <Link
-            to="/register"
-            className="font-medium text-indigo-600 hover:text-indigo-500"
-          >
+          <Link to="/register" className="font-semibold text-emerald-700 hover:text-emerald-800">
             create a new account
           </Link>
         </p>
-      </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md flex justify-between items-center">
-                <span>{error}</span>
-                <button
-                  type="button"
-                  onClick={() => setError("")}
-                  className="text-red-800 font-bold text-lg"
-                >
-                  ×
-                </button>
-              </div>
-            )}
-
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Email address
-              </label>
-              <div className="mt-1">
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  placeholder="Enter your email"
-                  disabled={loading}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Password
-              </label>
-              <div className="mt-1">
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  placeholder="Enter your password"
-                  disabled={loading}
-                />
-              </div>
-            </div>
-
-            <div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {loading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Signing in...
-                  </>
-                ) : (
-                  "Sign in"
-                )}
+        <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
+          {error && (
+            <div className="flex items-center justify-between rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+              <span>{error}</span>
+              <button type="button" onClick={() => setError("")} className="font-bold">
+                x
               </button>
             </div>
-          </form>
+          )}
 
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">
-                  Quick Test Accounts
-                </span>
-              </div>
-            </div>
+          <div>
+            <label htmlFor="email" className="mb-1 block text-sm font-semibold text-slate-700">
+              Email address
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              value={formData.email}
+              onChange={handleChange}
+              className="block w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+              placeholder="Enter your email"
+              disabled={loading}
+            />
+          </div>
 
-            <div className="mt-3 grid grid-cols-2 gap-3">
-              <button
-                onClick={() => fillDemoAccount("admin@gmail.com", "admin123")}
-                className="text-xs text-center p-2 bg-purple-100 hover:bg-purple-200 rounded border border-purple-300 transition-colors cursor-pointer"
-              >
-                <strong className="text-purple-800">Admin</strong>
-                <br />
-                <span className="text-purple-600">admin@gmail.com</span>
-                <br />
-                <span className="text-purple-500">admin123</span>
-              </button>
+          <div>
+            <label htmlFor="password" className="mb-1 block text-sm font-semibold text-slate-700">
+              Password
+            </label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              required
+              value={formData.password}
+              onChange={handleChange}
+              className="block w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+              placeholder="Enter your password"
+              disabled={loading}
+            />
+          </div>
 
-              <button
-                onClick={() => fillDemoAccount("driver@gmail.com", "driver123")}
-                className="text-xs text-center p-2 bg-green-100 hover:bg-green-200 rounded border border-green-300 transition-colors cursor-pointer"
-              >
-                <strong className="text-green-800">Driver</strong>
-                <br />
-                <span className="text-green-600">driver@gmail.com</span>
-                <br />
-                <span className="text-green-500">driver123</span>
-              </button>
-            </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="flex w-full items-center justify-center rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {loading ? "Signing in..." : "Sign in"}
+          </button>
+        </form>
 
-            <div className="mt-2 grid grid-cols-2 gap-3">
-              <button
-                onClick={() =>
-                  fillDemoAccount("customer@gmail.com", "customer123")
-                }
-                className="text-xs text-center p-2 bg-blue-100 hover:bg-blue-200 rounded border border-blue-300 transition-colors cursor-pointer"
-              >
-                <strong className="text-blue-800">Customer</strong>
-                <br />
-                <span className="text-blue-600">customer@gmail.com</span>
-                <br />
-                <span className="text-blue-500">customer123</span>
-              </button>
-            </div>
+        <div className="mt-6 border-t border-slate-200 pt-5">
+          <p className="mb-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Quick Test Accounts
+          </p>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <button
+              onClick={() => fillDemoAccount("admin@gmail.com", "admin123")}
+              className="rounded-lg border border-violet-200 bg-violet-50 p-2 text-left text-xs"
+            >
+              <p className="font-bold text-violet-800">Admin</p>
+              <p className="text-violet-700">admin@gmail.com</p>
+            </button>
+            <button
+              onClick={() => fillDemoAccount("driver@gmail.com", "driver123")}
+              className="rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-left text-xs"
+            >
+              <p className="font-bold text-emerald-800">Driver</p>
+              <p className="text-emerald-700">driver@gmail.com</p>
+            </button>
+            <button
+              onClick={() => fillDemoAccount("customer@gmail.com", "customer123")}
+              className="rounded-lg border border-sky-200 bg-sky-50 p-2 text-left text-xs sm:col-span-2"
+            >
+              <p className="font-bold text-sky-800">Customer</p>
+              <p className="text-sky-700">customer@gmail.com</p>
+            </button>
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 };
 

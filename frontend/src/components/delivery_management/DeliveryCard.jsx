@@ -1,11 +1,12 @@
 import React from "react";
+import { MapPin, Phone, Trash2, AlertTriangle, Eye } from "lucide-react";
 
 const DeliveryCard = ({
   delivery,
   onToggleAvailability,
   onDelete,
-  canManage = true, // ✅ Default to true for backward compatibility
-  canDelete = false, // ✅ Default to false for security
+  canManage = true,
+  canDelete = false,
 }) => {
   const handleToggle = async () => {
     if (!canManage) {
@@ -15,7 +16,7 @@ const DeliveryCard = ({
 
     try {
       await onToggleAvailability(delivery._id, delivery.available);
-    } catch (error) {
+    } catch {
       alert("Failed to update status");
     }
   };
@@ -32,88 +33,80 @@ const DeliveryCard = ({
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 ring-1 ring-gray-50 p-6 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
-      {/* Header with name and status */}
-      <div className="flex justify-between items-start mb-4">
-        <h3 className="text-xl font-bold text-gray-800 truncate">
+    <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm ring-1 ring-slate-100 transition hover:shadow-md sm:p-6">
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <h3 className="line-clamp-2 text-lg font-extrabold text-slate-900 sm:text-xl">
           {delivery.name}
         </h3>
         <span
-          className={`px-3 py-1 rounded-full text-xs font-semibold ${
+          className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide ${
             delivery.available === "available"
-              ? "bg-green-100 text-green-800"
+              ? "bg-emerald-100 text-emerald-700"
               : delivery.available === "unavailable"
-              ? "bg-red-100 text-red-800"
-              : "bg-yellow-100 text-yellow-800"
+              ? "bg-rose-100 text-rose-700"
+              : "bg-amber-100 text-amber-700"
           }`}
         >
           {delivery.available || "unknown"}
         </span>
       </div>
 
-      {/* Delivery Details */}
-      <div className="space-y-2 mb-4">
-        <div className="flex items-center text-gray-600">
-          <span className="mr-2">📍</span>
-          <p className="text-sm">{delivery.address}</p>
+      <div className="mb-5 space-y-2">
+        <div className="flex items-start gap-2 text-sm text-slate-700">
+          <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+          <p className="line-clamp-2">{delivery.address}</p>
         </div>
 
-        <div className="flex items-center text-gray-600">
-          <span className="mr-2">📱</span>
-          <p className="text-sm">{delivery.mobile_number}</p>
+        <div className="flex items-center gap-2 text-sm text-slate-700">
+          <Phone className="h-4 w-4 shrink-0 text-slate-500" />
+          <p>{delivery.mobile_number || "N/A"}</p>
         </div>
 
         {delivery.location && (
-          <div className="flex items-center text-gray-600">
-            <span className="mr-2">🎯</span>
-            <p className="text-sm">
-              Lat: {delivery.location.lat?.toFixed(4)}, Lng:{" "}
-              {delivery.location.lng?.toFixed(4)}
-            </p>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-2 text-xs text-slate-600">
+            Lat: {delivery.location.lat?.toFixed(4)}, Lng: {delivery.location.lng?.toFixed(4)}
           </div>
         )}
       </div>
 
-      {/* Action Buttons - Conditionally rendered based on permissions */}
-      <div className="flex justify-between items-center space-x-3 mt-4">
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
         <button
           onClick={handleToggle}
           disabled={!canManage}
-          className={`flex-1 py-2.5 px-4 rounded-xl font-bold text-sm transition shadow-sm hover:shadow ${
+          className={`w-full rounded-xl border px-4 py-2.5 text-sm font-bold transition sm:flex-1 ${
             delivery.available === "available"
-              ? "bg-red-50 hover:bg-red-100 text-red-600 border border-red-200"
-              : "bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200"
-          } ${!canManage ? "opacity-50 cursor-not-allowed" : ""}`}
+              ? "border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
+              : "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+          } ${!canManage ? "cursor-not-allowed opacity-50" : ""}`}
         >
-          {delivery.available === "available"
-            ? "Mark Unavailable"
-            : "Mark Available"}
+          {delivery.available === "available" ? "Mark Unavailable" : "Mark Available"}
         </button>
 
         {canDelete && (
           <button
             onClick={handleDelete}
-            className="bg-gray-50 hover:bg-red-50 text-gray-600 hover:text-red-600 border border-gray-200 hover:border-red-200 py-2.5 px-4 rounded-xl font-bold text-sm transition shadow-sm hover:shadow"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 sm:w-auto"
           >
-            🗑️ Delete
+            <Trash2 className="h-4 w-4" />
+            Delete
           </button>
         )}
       </div>
 
-      {/* Status Message */}
       {delivery.available === "unavailable" && (
-        <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
-          ⚠️ This stop will be excluded from route optimization
+        <div className="mt-3 flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 p-2 text-sm text-rose-700">
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          This stop will be excluded from route optimization
         </div>
       )}
 
-      {/* Permission Notice for Viewers */}
       {!canManage && (
-        <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-blue-700 text-sm">
-          👀 View only - Contact admin for changes
+        <div className="mt-3 flex items-center gap-2 rounded-lg border border-sky-200 bg-sky-50 p-2 text-sm text-sky-700">
+          <Eye className="h-4 w-4 shrink-0" />
+          View only. Contact admin for changes.
         </div>
       )}
-    </div>
+    </article>
   );
 };
 

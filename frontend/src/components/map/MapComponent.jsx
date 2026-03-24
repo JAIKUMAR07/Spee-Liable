@@ -3,8 +3,12 @@ import { MapContainer, TileLayer } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
 import "leaflet-routing-machine";
-import { deliveryStopsAPI, deliveryMarksAPI, personalStopsAPI } from "../../utils/apiClient"; // ✅ Updated import
-import { useAuth } from "../../context/AuthContext"; // ✅ Add auth hook
+import {
+  deliveryStopsAPI,
+  deliveryMarksAPI,
+  personalStopsAPI,
+} from "../../utils/apiClient";
+import { useAuth } from "../../context/AuthContext";
 
 import Layout from "../layout/Layout";
 import { useMapOperations } from "./hooks/useMapOperations";
@@ -48,7 +52,7 @@ const MapComponent = () => {
     handleReset,
   } = useMapOperations();
 
-  const { can } = useAuth(); // ✅ Get permission checks
+  const { can } = useAuth();
   const [showModal, setShowModal] = React.useState(false);
   const [deleting, setDeleting] = React.useState(false);
   const [showRouteOrderPanel, setShowRouteOrderPanel] = React.useState(false);
@@ -58,8 +62,6 @@ const MapComponent = () => {
     fetchDeliveries();
   }, [fetchDeliveries]);
 
-  // ✅ UPDATED: Use API client and add permission check
-  // ✅ UPDATED: Use API client and add permission check with auto-optimization
   const handleDeleteStop = async (id, name, isPersonal) => {
     if (!can("manage_deliveries")) {
       alert("You don't have permission to modify stops");
@@ -77,24 +79,21 @@ const MapComponent = () => {
         await deliveryStopsAPI.delete(id);
       }
 
-      // Then remove from local state
       setMultipleMarkers((prev) => prev.filter((marker) => marker._id !== id));
       setRouteOrder((prev) => prev.filter((markerId) => markerId !== id));
 
-      // Keep route state updated without timer-based re-optimization.
       if (isRoutingActive) {
         console.log("Route remains active after stop removal.");
       }
 
       alert(`"${name}" marked as arrived and removed successfully!`);
     } catch (error) {
-      console.error("Error deleting stop:", error);
       const errorMessage =
-        error.response?.data?.error ||
-        "Failed to mark as arrived. Please try again.";
+        error.response?.data?.error || "Failed to mark as arrived. Please try again.";
       alert(errorMessage);
     }
   };
+
   const handleSearch = async () => {
     const locationName = searchInputRef.current.value.trim();
     if (!locationName) {
@@ -134,7 +133,7 @@ const MapComponent = () => {
       }
 
       const stopData = {
-        reason: reason,
+        reason,
         address: locationName,
         location: {
           lat: coordinates[0],
@@ -159,20 +158,19 @@ const MapComponent = () => {
           isPersonal: true,
         },
       ]);
-      
+
       setSearchLocation(null);
       searchInputRef.current.value = "";
-      alert(`Personal stop added successfully!`);
+      alert("Personal stop added successfully!");
     } catch (error) {
-      console.error("Error adding personal stop:", error);
-      const errorMessage = error.response?.data?.error || "Failed to add personal stop.";
+      const errorMessage =
+        error.response?.data?.error || "Failed to add personal stop.";
       setError(errorMessage);
     } finally {
       setAddingMarker(false);
     }
   };
 
-  // ✅ UPDATED: Add permission check for bulk deletion
   const handleDeleteDeliveries = async () => {
     if (!can("delete_records")) {
       alert("You don't have permission to delete all deliveries");
@@ -181,7 +179,6 @@ const MapComponent = () => {
 
     try {
       setDeleting(true);
-      // ✅ Using API client
       await deliveryMarksAPI.deleteAll();
 
       setMultipleMarkers([]);
@@ -225,143 +222,143 @@ const MapComponent = () => {
 
   return (
     <Layout>
-      <div className="p-4 bg-green-50 rounded-xl shadow-md space-y-6">
-        {/* Location Permission Warning */}
-        {locationPermissionDenied && (
-          <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
-            <p className="font-semibold">📍 Location access is blocked</p>
-            <p className="mt-1">To use automatic location detection:</p>
-            <ol className="list-decimal list-inside mt-2 ml-2">
-              <li>Click the lock icon (🔒) in your browser's address bar</li>
-              <li>Change "Location" permission to "Allow"</li>
-              <li>Refresh the page or click "Try Again" below</li>
-            </ol>
-            <div className="mt-3 flex gap-2">
+      <section className="min-h-[calc(100vh-132px)] bg-gradient-to-br from-emerald-50 via-white to-sky-50 px-3 py-4 sm:px-6 sm:py-6">
+        <div className="mx-auto max-w-7xl space-y-5 rounded-2xl border border-emerald-100 bg-white/80 p-4 shadow-sm sm:p-6">
+          {locationPermissionDenied && (
+            <div className="mb-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-amber-800">
+              <p className="font-semibold">Location access is blocked</p>
+              <p className="mt-1">To use automatic location detection:</p>
+              <ol className="ml-2 mt-2 list-inside list-decimal text-sm">
+                <li>Click the lock icon in your browser&apos;s address bar</li>
+                <li>Change "Location" permission to "Allow"</li>
+                <li>Refresh the page or click "Try Again" below</li>
+              </ol>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  onClick={resetLocationPermission}
+                  className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700"
+                >
+                  Try Again
+                </button>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-700"
+                >
+                  Refresh Page
+                </button>
+              </div>
+            </div>
+          )}
+
+          <MapControls
+            searchInputRef={searchInputRef}
+            loading={loading}
+            error={error}
+            multipleMarkers={multipleMarkers}
+            onSearch={handleSearch}
+            onAddPersonalMarker={handleAddPersonalMarker}
+            onGetLocation={getCurrentLocation}
+            onOptimizeRoute={handleOptimizeRoute}
+            onReset={handleReset}
+            onClearRoute={handleClearRoute}
+            isRoutingActive={isRoutingActive}
+            isGettingLocation={isGettingLocation}
+            canAddMarker={can("manage_deliveries")}
+            canOptimizeRoute={can("optimize_routes")}
+          />
+
+          <div className="relative rounded-xl border border-slate-200 bg-slate-50 p-2 sm:p-3">
+            <MapContainer
+              ref={mapRef}
+              center={userLocation || [20.5937, 78.9629]}
+              zoom={13}
+              style={{ height: "68vh", minHeight: "420px", width: "100%" }}
+              scrollWheelZoom={true}
+            >
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              />
+
+              <AutoCenterOnLocation location={userLocation} />
+
+              <DeliveryMarkers
+                userLocation={userLocation}
+                searchLocation={searchLocation}
+                multipleMarkers={multipleMarkers.filter(
+                  (marker) =>
+                    marker.available === "available" ||
+                    !marker.available ||
+                    marker.available === "unknown"
+                )}
+                routeOrder={routeOrder || []}
+                onDeleteStop={handleDeleteStop}
+                canManage={can("manage_deliveries")}
+              />
+            </MapContainer>
+
+            {isRoutingActive && routeOrder.length > 0 && !showRouteOrderPanel && (
               <button
-                onClick={resetLocationPermission}
-                className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded text-sm font-medium transition"
+                onClick={() => setShowRouteOrderPanel((prev) => !prev)}
+                className="absolute bottom-4 left-3 z-[5001] rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-md hover:bg-slate-50 sm:bottom-6 sm:left-6"
               >
-                🔄 Try Again
+                Show Order
               </button>
+            )}
+
+            {showRouteOrderPanel && (
+              <RouteOrderPanel
+                routeOrder={routeOrder || []}
+                multipleMarkers={multipleMarkers}
+                onClose={() => setShowRouteOrderPanel(false)}
+              />
+            )}
+
+            {isRoutingActive &&
+              routeInstructions.length > 0 &&
+              !showRouteInstructions && (
+                <button
+                  onClick={() => setShowRouteInstructions((prev) => !prev)}
+                  className="absolute right-3 top-4 z-[5001] rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-md hover:bg-slate-50 sm:right-6 sm:top-6"
+                >
+                  Show Directions
+                </button>
+              )}
+
+            {showRouteInstructions && (
+              <RouteInstructionsPanel
+                instructions={routeInstructions}
+                isRoutingActive={isRoutingActive}
+                onClose={() => setShowRouteInstructions(false)}
+              />
+            )}
+          </div>
+
+          <RouteSummary
+            routeOrder={routeOrder}
+            multipleMarkers={multipleMarkers}
+            isRoutingActive={isRoutingActive}
+          />
+
+          {can("delete_records") && (
+            <div className="flex justify-center">
               <button
-                onClick={() => window.location.reload()}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium transition"
+                onClick={() => setShowModal(true)}
+                className="rounded-lg bg-rose-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-rose-700"
               >
-                🔃 Refresh Page
+                Delete All Deliveries
               </button>
             </div>
-          </div>
-        )}
-
-        <MapControls
-          searchInputRef={searchInputRef}
-          loading={loading}
-          error={error}
-          multipleMarkers={multipleMarkers}
-          onSearch={handleSearch}
-          onAddPersonalMarker={handleAddPersonalMarker}
-          onGetLocation={getCurrentLocation}
-          onOptimizeRoute={handleOptimizeRoute}
-          onReset={handleReset}
-          onClearRoute={handleClearRoute}
-          isRoutingActive={isRoutingActive}
-          isGettingLocation={isGettingLocation}
-          canAddMarker={can("manage_deliveries")} // ✅ Pass permissions
-          canOptimizeRoute={can("optimize_routes")}
-        />
-
-        <div className="rounded-lg border-2 flex justify-center border-gray-300 p-5 relative">
-          <MapContainer
-            ref={mapRef}
-            center={userLocation || [20.5937, 78.9629]}
-            zoom={13}
-            style={{ height: "500px", width: "100%" }}
-            scrollWheelZoom={true}
-          >
-            <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            />
-
-            <AutoCenterOnLocation location={userLocation} />
-
-            <DeliveryMarkers
-              userLocation={userLocation}
-              searchLocation={searchLocation}
-              multipleMarkers={multipleMarkers.filter(
-                (marker) =>
-                  marker.available === "available" ||
-                  !marker.available ||
-                  marker.available === "unknown"
-              )}
-              routeOrder={routeOrder || []} // ✅ ADD SAFETY CHECK
-              onDeleteStop={handleDeleteStop}
-              canManage={can("manage_deliveries")}
-            />
-          </MapContainer>
-
-          {isRoutingActive && routeOrder.length > 0 && !showRouteOrderPanel && (
-            <button
-              onClick={() => setShowRouteOrderPanel((prev) => !prev)}
-              className="absolute bottom-8 left-8 bg-white border border-gray-200 px-3 py-2 rounded-lg shadow-md z-[5001] text-sm font-semibold text-gray-700 hover:bg-gray-50"
-            >
-              Show Order
-            </button>
           )}
 
-          {showRouteOrderPanel && (
-            <RouteOrderPanel
-              routeOrder={routeOrder || []} // ✅ ADD SAFETY CHECK
-              multipleMarkers={multipleMarkers}
-              onClose={() => setShowRouteOrderPanel(false)}
-            />
-          )}
-
-          {isRoutingActive &&
-            routeInstructions.length > 0 &&
-            !showRouteInstructions && (
-            <button
-              onClick={() => setShowRouteInstructions((prev) => !prev)}
-              className="absolute top-8 right-8 bg-white border border-gray-200 px-3 py-2 rounded-lg shadow-md z-[5001] text-sm font-semibold text-gray-700 hover:bg-gray-50"
-            >
-              Show Directions
-            </button>
-          )}
-
-          {showRouteInstructions && (
-            <RouteInstructionsPanel
-              instructions={routeInstructions}
-              isRoutingActive={isRoutingActive}
-              onClose={() => setShowRouteInstructions(false)}
-            />
-          )}
+          <DeleteModal
+            showModal={showModal}
+            deleting={deleting}
+            onClose={() => setShowModal(false)}
+            onDelete={handleDeleteDeliveries}
+          />
         </div>
-
-        <RouteSummary
-          routeOrder={routeOrder}
-          multipleMarkers={multipleMarkers}
-          isRoutingActive={isRoutingActive}
-        />
-
-        {/* ✅ Only show delete all button if user has permission */}
-        {can("delete_records") && (
-          <div className="flex justify-center">
-            <button
-              onClick={() => setShowModal(true)}
-              className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-6 rounded-xl shadow-md transition"
-            >
-              🗑️ Delete All Deliveries
-            </button>
-          </div>
-        )}
-
-        <DeleteModal
-          showModal={showModal}
-          deleting={deleting}
-          onClose={() => setShowModal(false)}
-          onDelete={handleDeleteDeliveries}
-        />
-      </div>
+      </section>
     </Layout>
   );
 };

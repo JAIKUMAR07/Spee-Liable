@@ -11,86 +11,62 @@ const ManualForm = ({
   loading,
 }) => {
   return (
-    <div className="w-full max-w-md bg-white shadow-md rounded-lg p-5">
-      <h3 className="text-lg font-semibold mb-3">Scan Package Manually</h3>
-      <p className="text-sm text-gray-600 mb-4">
-        Enter package details and customer email to scan a package
-      </p>
+    <div className="w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <h3 className="text-xl font-extrabold text-slate-900">Scan Package Manually</h3>
+      <p className="mt-1 text-sm text-slate-600">Enter package details and customer email.</p>
 
-      <div className="space-y-3">
+      <div className="mt-4 space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Package Name *
-          </label>
+          <label className="mb-1 block text-sm font-semibold text-slate-700">Package Name</label>
           <input
             type="text"
-            placeholder="e.g., iPhone 15, MacBook Pro, etc."
+            placeholder="e.g. iPhone 15"
             value={name}
             onChange={onNameChange}
             disabled={loading}
-            className="w-full border p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none transition focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Delivery Address *
-          </label>
+          <label className="mb-1 block text-sm font-semibold text-slate-700">Delivery Address</label>
           <input
             type="text"
             placeholder="Full delivery address"
             value={address}
             onChange={onAddressChange}
             disabled={loading}
-            className="w-full border p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none transition focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Customer Email *
-          </label>
+          <label className="mb-1 block text-sm font-semibold text-slate-700">Customer Email</label>
           <input
             type="email"
             placeholder="customer@example.com"
             value={customerEmail}
             onChange={onCustomerEmailChange}
             disabled={loading}
-            className="w-full border p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none transition focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
           />
-          <p className="text-xs text-gray-500 mt-1">
-            Customer will receive notification to update package status
-          </p>
+          <p className="mt-1 text-xs text-slate-500">Customer receives a notification to update package status.</p>
         </div>
 
         <button
           onClick={onSubmit}
-          disabled={
-            loading || !name.trim() || !address.trim() || !customerEmail.trim()
-          }
-          className="w-full bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700 disabled:bg-indigo-400 transition flex items-center justify-center"
+          disabled={loading || !name.trim() || !address.trim() || !customerEmail.trim()}
+          className="inline-flex w-full items-center justify-center rounded-xl border border-indigo-700 bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {loading ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-              Scanning...
-            </>
-          ) : (
-            "📦 Scan Package"
-          )}
+          {loading ? "Scanning..." : "Scan Package"}
         </button>
 
-        {/* Help text */}
-        <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-          <p className="text-sm text-blue-700">
-            <strong>How it works:</strong>
-            <br />
-            1. Enter package details and customer email
-            <br />
-            2. Customer gets notification to update availability
-            <br />
-            3. Package appears on map when marked "available"
-          </p>
+        <div className="rounded-lg border border-sky-200 bg-sky-50 p-3 text-sm text-sky-800">
+          1. Enter package details and customer email.
+          <br />
+          2. Customer updates availability from notification.
+          <br />
+          3. Available packages appear in route optimization.
         </div>
       </div>
     </div>

@@ -4,8 +4,7 @@ import { useProfile } from "../../hooks/useProfile";
 
 const ProfileForm = () => {
   const { user, updateUser } = useAuth();
-  const { loading, error, success, updateProfile, clearMessages } =
-    useProfile();
+  const { loading, error, success, updateProfile, clearMessages } = useProfile();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -15,15 +14,10 @@ const ProfileForm = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Get user ID safely (now it will always work)
-  const getUserId = () => {
-    return user?.id || user?._id || "Not available";
-  };
+  const getUserId = () => user?.id || user?._id || "Not available";
 
-  // Initialize form with user data
   useEffect(() => {
     if (user && !isInitialized) {
-      console.log("🔄 Initializing form with user:", user);
       setFormData({
         name: user.name || "",
         email: user.email || "",
@@ -32,7 +26,6 @@ const ProfileForm = () => {
     }
   }, [user, isInitialized]);
 
-  // Clear messages when editing state changes
   useEffect(() => {
     clearMessages();
   }, [isEditing, clearMessages]);
@@ -54,21 +47,14 @@ const ProfileForm = () => {
     }
 
     const result = await updateProfile(formData);
-    console.log("📨 API Response:", result);
 
     if (result.success) {
-      // Update global auth state
       if (typeof updateUser === "function") {
-        console.log("🔄 Updating user context with:", result.user);
-
-        // Normalize the API response user data
         const normalizedUser = {
           ...result.user,
           id: result.user?.id || result.user?._id,
           _id: result.user?._id || result.user?.id,
         };
-
-        console.log("✅ Normalized update user:", normalizedUser);
         updateUser(normalizedUser);
       }
       setIsEditing(false);
@@ -87,122 +73,103 @@ const ProfileForm = () => {
     clearMessages();
   };
 
-  // Show loading until user data is available and form is initialized
   if (!user || !isInitialized) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <p className="text-gray-500">Loading user data...</p>
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <p className="text-slate-600">Loading user data...</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-bold text-gray-800">Profile Information</h3>
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-xl font-extrabold text-slate-900">Profile Information</h3>
         {!isEditing && (
           <button
             onClick={() => setIsEditing(true)}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-semibold transition"
+            className="rounded-xl border border-indigo-700 bg-indigo-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-indigo-700"
           >
-            ✏️ Edit Profile
+            Edit Profile
           </button>
         )}
       </div>
 
-      {/* Success Message */}
       {success && (
-        <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg">
-          ✅ Profile updated successfully!
+        <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
+          Profile updated successfully.
         </div>
       )}
 
-      {/* Error Message */}
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg">
-          ❌ {error}
+        <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+          {error}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            User ID
-          </label>
+          <label className="mb-1 block text-sm font-semibold text-slate-700">User ID</label>
           <input
             type="text"
             value={getUserId()}
             disabled
-            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed text-sm font-mono"
+            className="w-full rounded-lg border border-slate-300 bg-slate-100 px-3 py-2 font-mono text-sm text-slate-700"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Full Name
-          </label>
+          <label className="mb-1 block text-sm font-semibold text-slate-700">Full Name</label>
           <input
             type="text"
             name="name"
             value={formData.name}
             onChange={handleChange}
             disabled={!isEditing || loading}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none transition focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-slate-100"
             placeholder="Enter your full name"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Email Address
-          </label>
+          <label className="mb-1 block text-sm font-semibold text-slate-700">Email Address</label>
           <input
             type="email"
             name="email"
             value={formData.email}
             onChange={handleChange}
             disabled={!isEditing || loading}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none transition focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-slate-100"
             placeholder="Enter your email"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Role
-          </label>
+          <label className="mb-1 block text-sm font-semibold text-slate-700">Role</label>
           <input
             type="text"
             value={user.role || ""}
             disabled
-            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed capitalize"
+            className="w-full rounded-lg border border-slate-300 bg-slate-100 px-3 py-2 capitalize text-slate-700"
           />
         </div>
 
-        {/* Action Buttons */}
         {isEditing && (
-          <div className="flex space-x-3 pt-4">
+          <div className="flex flex-col gap-2 pt-2 sm:flex-row">
             <button
               type="submit"
               disabled={loading}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+              className="inline-flex items-center justify-center rounded-xl border border-emerald-700 bg-emerald-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Saving...
-                </>
-              ) : (
-                "💾 Save Changes"
-              )}
+              {loading ? "Saving..." : "Save Changes"}
             </button>
             <button
               type="button"
               onClick={handleCancel}
               disabled={loading}
-              className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold transition disabled:opacity-50"
+              className="rounded-xl border border-slate-300 bg-slate-100 px-4 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              ❌ Cancel
+              Cancel
             </button>
           </div>
         )}

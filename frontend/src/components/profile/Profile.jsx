@@ -4,118 +4,58 @@ import { useAuth } from "../../context/AuthContext";
 import ProfileForm from "./ProfileForm";
 import PasswordForm from "./PasswordForm";
 
+const getRoleBadgeColor = (role) => {
+  switch (role) {
+    case "admin":
+      return "bg-violet-100 text-violet-700";
+    case "manager":
+      return "bg-sky-100 text-sky-700";
+    case "driver":
+      return "bg-emerald-100 text-emerald-700";
+    default:
+      return "bg-slate-100 text-slate-700";
+  }
+};
+
 const Profile = () => {
   const { user } = useAuth();
 
-  const getRoleBadgeColor = (role) => {
-    switch (role) {
-      case "admin":
-        return "bg-purple-100 text-purple-800";
-      case "manager":
-        return "bg-blue-100 text-blue-800";
-      case "driver":
-        return "bg-green-100 text-green-800";
-      case "viewer":
-        return "bg-gray-100 text-gray-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
   return (
     <Layout>
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              My Profile
-            </h1>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Manage your account settings and personal information
-            </p>
+      <section className="min-h-[calc(100vh-130px)] bg-gradient-to-br from-emerald-50 via-white to-sky-50 py-6 sm:py-8">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">My Profile</h1>
+            <p className="mt-1 text-sm text-slate-600 sm:text-base">Manage your account settings and personal information.</p>
           </div>
 
-          {/* User Summary Card */}
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center">
-                <span className="text-2xl text-indigo-600 font-bold">
+          <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-4">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-indigo-100 text-xl font-extrabold text-indigo-700 sm:h-16 sm:w-16 sm:text-2xl">
                   {user?.name?.charAt(0).toUpperCase() || "U"}
-                </span>
+                </div>
+                <div>
+                  <h2 className="text-lg font-extrabold text-slate-900 sm:text-xl">{user?.name}</h2>
+                  <p className="text-sm text-slate-600">{user?.email}</p>
+                  <span className={`mt-1 inline-block rounded-full px-3 py-1 text-xs font-bold capitalize ${getRoleBadgeColor(user?.role)}`}>
+                    {user?.role}
+                  </span>
+                </div>
               </div>
-              <div className="flex-1">
-                <h2 className="text-xl font-bold text-gray-800">
-                  {user?.name}
-                </h2>
-                <p className="text-gray-600">{user?.email}</p>
-                <span
-                  className={`inline-block px-3 py-1 rounded-full text-xs font-semibold mt-1 capitalize ${getRoleBadgeColor(
-                    user?.role
-                  )}`}
-                >
-                  {user?.role}
-                </span>
-              </div>
-              <div className="text-right">
-                <p className="text-sm text-gray-500">Member since</p>
-                <p className="text-sm font-medium text-gray-700">
-                  {user?.createdAt
-                    ? new Date(user.createdAt).toLocaleDateString()
-                    : "Recently"}
-                </p>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                <p className="font-semibold text-slate-900">Member since</p>
+                <p>{user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : "Recently"}</p>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Profile Information */}
-            <div className="lg:col-span-1">
-              <ProfileForm />
-            </div>
-
-            {/* Password Change */}
-            <div className="lg:col-span-1">
-              <PasswordForm />
-            </div>
-          </div>
-
-          {/* Account Statistics */}
-          <div className="bg-white rounded-lg shadow-md p-6 mt-6">
-            <h3 className="text-lg font-bold text-gray-800 mb-4">
-              Account Overview
-            </h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">📦</div>
-                <div className="text-sm text-gray-600 mt-1">My Deliveries</div>
-                <div className="text-lg font-semibold text-gray-800">
-                  Coming Soon
-                </div>
-              </div>
-              <div className="text-center p-4 bg-green-50 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">✅</div>
-                <div className="text-sm text-gray-600 mt-1">Completed</div>
-                <div className="text-lg font-semibold text-gray-800">
-                  Coming Soon
-                </div>
-              </div>
-              <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                <div className="text-2xl font-bold text-yellow-600">⏳</div>
-                <div className="text-sm text-gray-600 mt-1">Pending</div>
-                <div className="text-lg font-semibold text-gray-800">
-                  Coming Soon
-                </div>
-              </div>
-              <div className="text-center p-4 bg-purple-50 rounded-lg">
-                <div className="text-2xl font-bold text-purple-600">⭐</div>
-                <div className="text-sm text-gray-600 mt-1">Rating</div>
-                <div className="text-lg font-semibold text-gray-800">-</div>
-              </div>
-            </div>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <ProfileForm />
+            <PasswordForm />
           </div>
         </div>
-      </div>
+      </section>
     </Layout>
   );
 };

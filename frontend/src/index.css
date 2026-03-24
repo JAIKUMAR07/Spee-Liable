@@ -1,1 +1,29 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap");
 @import "tailwindcss";
+
+:root {
+  --brand-50: #effcf8;
+  --brand-100: #d3f5ea;
+  --brand-500: #0f8f72;
+  --brand-600: #0a785f;
+  --ink-900: #0f1720;
+  --ink-700: #334155;
+  --surface: #f7fafc;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: "Manrope", "Segoe UI", Tahoma, sans-serif;
+  color: var(--ink-900);
+  background: var(--surface);
+}

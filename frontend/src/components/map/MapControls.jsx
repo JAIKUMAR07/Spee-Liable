@@ -13,8 +13,8 @@ const MapControls = ({
   onClearRoute,
   isRoutingActive,
   isGettingLocation,
-  canAddMarker = true, // ✅ New prop for permissions
-  canOptimizeRoute = true, // ✅ New prop for permissions
+  canAddMarker = true,
+  canOptimizeRoute = true,
 }) => {
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
@@ -23,25 +23,24 @@ const MapControls = ({
   };
 
   return (
-    <div className="flex flex-col items-center space-y-4">
+    <div className="space-y-4">
       <input
         ref={searchInputRef}
         type="text"
         placeholder="Enter address, landmark, or pincode..."
-        onKeyPress={handleKeyPress}
-        className="w-full max-w-md px-4 py-2 border border-black rounded-lg focus:ring-2 focus:ring-blue-500"
+        onKeyDown={handleKeyPress}
+        className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-800 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
       />
 
-      <div className="flex flex-wrap justify-center gap-3 mt-2">
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-start sm:gap-3">
         <button
           onClick={onSearch}
           disabled={loading}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 transition"
+          className="rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-sky-400"
         >
-          {loading ? "Searching..." : "🔍 Search"}
+          {loading ? "Searching..." : "Search"}
         </button>
 
-        {/* ✅ Conditionally show Add Stop button based on permissions */}
         {canAddMarker && (
           <button
             onClick={() => {
@@ -52,68 +51,57 @@ const MapControls = ({
                 onAddPersonalMarker(reason);
               }
             }}
-            className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
+            className="rounded-lg bg-amber-500 px-3 py-2 text-sm font-semibold text-white transition hover:bg-amber-600"
           >
-            ☕ Personal Stop
+            Personal Stop
           </button>
         )}
 
         <button
           onClick={onGetLocation}
           disabled={isGettingLocation}
-          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-green-400 transition flex items-center"
+          className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-400"
         >
-          {isGettingLocation ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-              Getting Location...
-            </>
-          ) : (
-            "📍 My Location"
-          )}
+          {isGettingLocation ? "Getting..." : "My Location"}
         </button>
 
-        {/* ✅ Conditionally show Optimize Route button based on permissions */}
         {canOptimizeRoute && (
           <button
             onClick={onOptimizeRoute}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+            className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-400"
             disabled={multipleMarkers.length === 0}
           >
-            🧭 Optimize Route
+            Optimize Route
           </button>
         )}
 
-        {/* Clear Route Button - Only show when route is active */}
         {isRoutingActive && (
           <button
             onClick={onClearRoute}
-            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+            className="rounded-lg bg-rose-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-rose-700"
           >
-            🗑️ Clear Route
+            Clear Route
           </button>
         )}
 
         <button
           onClick={onReset}
-          className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition"
+          className="rounded-lg bg-slate-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
         >
-          🔄 Reset All
+          Reset All
         </button>
       </div>
 
       {error && (
-        <div className="p-2 bg-red-100 text-red-700 rounded-md border border-red-300 w-full max-w-md text-center">
+        <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
           {error}
           {error.includes("timed out") && (
-            <div className="mt-1 text-sm">
-              <button
-                onClick={onGetLocation}
-                className="text-blue-600 underline"
-              >
-                Try again
-              </button>
-            </div>
+            <button
+              onClick={onGetLocation}
+              className="ml-2 font-semibold underline"
+            >
+              Try again
+            </button>
           )}
         </div>
       )}

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { getDefaultRouteForRole } from "../../utils/authRedirect";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -35,7 +36,7 @@ const Register = () => {
     const result = await register(registerData);
 
     if (result.success) {
-      navigate("/");
+      navigate(getDefaultRouteForRole(result.user?.role), { replace: true });
     } else {
       setError(result.error);
     }

@@ -77,6 +77,15 @@ export const useDeliveryStops = () => {
     }
   };
 
+  // Add newly scanned stop to the current list without full refetch
+  const prependStop = (stop) => {
+    if (!stop || !stop._id) return;
+    setStops((prev) => {
+      const exists = prev.some((s) => s._id === stop._id);
+      return exists ? prev : [stop, ...prev];
+    });
+  };
+
   // Load stops on mount
   useEffect(() => {
     fetchStops();
@@ -88,6 +97,7 @@ export const useDeliveryStops = () => {
     error,
     fetchStops,
     addStop,
+    prependStop,
     deleteStop,
     setError,
   };

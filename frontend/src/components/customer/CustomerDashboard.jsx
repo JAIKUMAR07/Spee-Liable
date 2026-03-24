@@ -51,8 +51,8 @@ const CustomerDashboard = () => {
       // Update local state optimistically
       setPackages((prev) =>
         prev.map((pkg) =>
-          pkg._id === packageId ? { ...pkg, available: newStatus } : pkg
-        )
+          pkg._id === packageId ? { ...pkg, available: newStatus } : pkg,
+        ),
       );
 
       // ✅ EMIT SOCKET EVENT FOR REAL-TIME UPDATE
@@ -64,7 +64,7 @@ const CustomerDashboard = () => {
           customerName: user.name,
         });
         console.log(
-          `📤 Emitted package status update: ${packageId} -> ${newStatus}`
+          `📤 Emitted package status update: ${packageId} -> ${newStatus}`,
         );
       } else {
         console.warn("Socket not available for real-time update");
@@ -85,11 +85,25 @@ const CustomerDashboard = () => {
       await notificationAPI.markAsRead(notificationId);
       setNotifications((prev) =>
         prev.map((notif) =>
-          notif._id === notificationId ? { ...notif, isRead: true } : notif
-        )
+          notif._id === notificationId ? { ...notif, isRead: true } : notif,
+        ),
       );
     } catch (error) {
       console.error("Error marking notification as read:", error);
+    }
+  };
+
+  const handleDeleteNotification = async (notificationId) => {
+    try {
+      const response = await notificationAPI.deleteNotification(notificationId);
+      if (!response?.data?.success) {
+        throw new Error(response?.data?.error || "Delete failed");
+      }
+      // Sync list from backend to guarantee DB/UI consistency.
+      await fetchNotifications();
+    } catch (error) {
+      console.error("Error deleting notification:", error);
+      alert("Failed to delete notification");
     }
   };
 
@@ -150,6 +164,7 @@ const CustomerDashboard = () => {
                   notifications={notifications}
                   loading={loading}
                   onMarkAsRead={handleMarkAsRead}
+                  onDeleteNotification={handleDeleteNotification}
                 />
               )}
               {activeTab === "packages" && (
@@ -168,7 +183,12 @@ const CustomerDashboard = () => {
 };
 
 // Notifications Tab Component
-const NotificationsTab = ({ notifications, loading, onMarkAsRead }) => {
+const NotificationsTab = ({
+  notifications,
+  loading,
+  onMarkAsRead,
+  onDeleteNotification,
+}) => {
   if (loading) {
     return (
       <div className="text-center py-8">
@@ -235,6 +255,17 @@ const NotificationsTab = ({ notifications, loading, onMarkAsRead }) => {
                     New
                   </span>
                 )}
+              </div>{" "}
+              <div className="mt-3 flex justify-end">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDeleteNotification(notification._id);
+                  }}
+                  className="text-xs font-semibold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 px-3 py-1.5 rounded-md transition"
+                >
+                  Delete
+                </button>
               </div>
               {notification.actionRequired && (
                 <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-yellow-700 text-sm">
@@ -293,8 +324,8 @@ const PackagesTab = ({ packages, loading, onStatusUpdate }) => {
                         pkg.available === "available"
                           ? "bg-green-100 text-green-800"
                           : pkg.available === "unavailable"
-                          ? "bg-red-100 text-red-800"
-                          : "bg-yellow-100 text-yellow-800"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-yellow-100 text-yellow-800"
                       }`}
                     >
                       {pkg.available}

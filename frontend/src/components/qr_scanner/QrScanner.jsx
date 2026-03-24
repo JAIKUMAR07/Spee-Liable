@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import Layout from "../layout/Layout";
 import { useDeliveryStops } from "./hooks/useDeliveryStops";
@@ -18,19 +18,31 @@ const QrScanner = () => {
   const [addingManually, setAddingManually] = useState(false);
   const [scanError, setScanError] = useState(""); // ✅ ADD ERROR STATE
   const [notifying, setNotifying] = useState(false); // ✅ ADD NOTIFYING STATE
+  const [isProcessingScan, setIsProcessingScan] = useState(false);
 
-  const { stops, loading, error, addStop, deleteStop, setError, fetchStops } =
+  const { stops, loading, error, prependStop, deleteStop, setError } =
     useDeliveryStops();
   const { can } = useAuth();
+
+  // Keep scanner callback stable while allowing latest logic inside.
+  const scanSuccessRef = useRef(async () => {});
+  const { scanning, toggleScanning, stopScanning, regionId } =
+    useQrScanner((decodedText) => scanSuccessRef.current(decodedText));
 
   // ✅ FIXED: Handle QR scan success with customer email
   const handleScanSuccess = useCallback(
     async (decodedText) => {
+      if (isProcessingScan) return;
+
       if (!can("scan_qr")) {
         alert("You don't have permission to scan QR codes");
-        toggleScanning();
+        stopScanning();
         return;
       }
+
+      setIsProcessingScan(true);
+      // Stop camera immediately after first successful decode to avoid duplicate processing
+      stopScanning();
 
       try {
         const stopData = parseQrData(decodedText);
@@ -49,32 +61,31 @@ const QrScanner = () => {
         });
 
         const savedStop = response.data.data;
+        prependStop(savedStop);
         alert(`${savedStop.name} scanned successfully!`);
-        toggleScanning();
-
-        // Refresh the stops list
-        fetchStops();
       } catch (err) {
         console.error("QR Scan error:", err);
         const errorMessage =
           err.response?.data?.error || err.message || "Failed to scan package";
         setScanError(errorMessage);
+      } finally {
+        setIsProcessingScan(false);
       }
     },
-    [can, fetchStops]
+    [can, isProcessingScan, prependStop, stopScanning]
   );
 
-  // ✅ Initialize scanner
-  const { scanning, toggleScanning, regionId } =
-    useQrScanner(handleScanSuccess);
+  useEffect(() => {
+    scanSuccessRef.current = handleScanSuccess;
+  }, [handleScanSuccess]);
 
   // Geocode function
   const geocodeAddress = async (address) => {
     try {
       const response = await fetch(
-        `https://api.allorigins.win/raw?url=${encodeURIComponent(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${address}&limit=1`
-        )}`
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+          address
+        )}&limit=1`
       );
 
       const data = await response.json();
@@ -88,6 +99,19 @@ const QrScanner = () => {
       return null;
     } catch (error) {
       console.error("Geocoding error:", error);
+      return null;
+    }
+  };
+
+  // Avoid blocking manual scan flow on slow geocoding services.
+  const geocodeAddressWithTimeout = async (address, timeoutMs = 2500) => {
+    try {
+      const timeoutPromise = new Promise((resolve) =>
+        setTimeout(() => resolve(null), timeoutMs)
+      );
+      const result = await Promise.race([geocodeAddress(address), timeoutPromise]);
+      return result;
+    } catch {
       return null;
     }
   };
@@ -121,10 +145,9 @@ const QrScanner = () => {
         customerEmail: email.trim(),
       });
 
+      const savedStop = response.data.data;
+      prependStop(savedStop);
       alert(`Package scanned successfully!`);
-
-      // Refresh the stops list
-      fetchStops();
     } catch (err) {
       console.error("Image upload error:", err);
       setScanError("Could not read QR from image. Please try another image.");
@@ -149,7 +172,7 @@ const QrScanner = () => {
     setScanError(""); // Clear previous errors
 
     try {
-      const location = await geocodeAddress(manualAddress.trim());
+      const location = await geocodeAddressWithTimeout(manualAddress.trim());
 
       const stopData = {
         name: name.trim(),
@@ -162,6 +185,7 @@ const QrScanner = () => {
       // ✅ USE THE NEW API
       const response = await deliveryAPI.scanPackage(stopData);
       const savedStop = response.data.data;
+      prependStop(savedStop);
 
       alert(`"${savedStop.name}" added to your delivery list!`);
 
@@ -170,8 +194,6 @@ const QrScanner = () => {
       setManualAddress("");
       setCustomerEmail("");
 
-      // Refresh stops list
-      fetchStops();
     } catch (error) {
       console.error("Manual scan error:", error);
       const errorMessage =
@@ -197,8 +219,6 @@ const QrScanner = () => {
     try {
       await deleteStop(id);
       alert(`"${name}" deleted successfully!`);
-      // Refresh the list
-      fetchStops();
     } catch (error) {
       const errorMessage =
         error.response?.data?.error || "Failed to delete stop.";
@@ -237,7 +257,9 @@ const QrScanner = () => {
 
         <ScannerControls
           scanning={scanning}
-          onToggleScan={toggleScanning}
+          onToggleScan={() => {
+            if (!isProcessingScan) toggleScanning();
+          }}
           onImageUpload={handleImageUpload}
           canScan={can("scan_qr")}
           canUpload={can("scan_qr")}

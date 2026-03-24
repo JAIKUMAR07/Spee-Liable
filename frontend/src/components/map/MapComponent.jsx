@@ -13,6 +13,7 @@ import { geocodeAddress } from "./utils/mapUtils";
 import MapControls from "./MapControls";
 import DeliveryMarkers from "./DeliveryMarkers";
 import RouteOrderPanel from "./RouteOrderPanel";
+import RouteInstructionsPanel from "./RouteInstructionsPanel";
 import RouteSummary from "./RouteSummary";
 import DeleteModal from "./DeleteModal";
 import AutoCenterOnLocation from "./AutoCenterOnLocation";
@@ -25,6 +26,8 @@ const MapComponent = () => {
     loading,
     error,
     routeOrder,
+    routeInstructions,
+    showRouteInstructions,
     isRoutingActive,
     setIsRoutingActive,
     locationPermissionDenied,
@@ -36,6 +39,8 @@ const MapComponent = () => {
     setError,
     setMultipleMarkers,
     setRouteOrder,
+    setRouteInstructions,
+    setShowRouteInstructions,
     setSearchLocation,
     getCurrentLocation,
     fetchDeliveries,
@@ -46,6 +51,7 @@ const MapComponent = () => {
   const { can } = useAuth(); // ✅ Get permission checks
   const [showModal, setShowModal] = React.useState(false);
   const [deleting, setDeleting] = React.useState(false);
+  const [showRouteOrderPanel, setShowRouteOrderPanel] = React.useState(false);
   const [, setAddingMarker] = React.useState(false);
 
   useEffect(() => {
@@ -180,6 +186,9 @@ const MapComponent = () => {
 
       setMultipleMarkers([]);
       setRouteOrder([]);
+      setRouteInstructions([]);
+      setShowRouteInstructions(false);
+      setShowRouteOrderPanel(false);
 
       if (routingControlRef.current) {
         mapRef.current?.removeControl(routingControlRef.current);
@@ -203,6 +212,9 @@ const MapComponent = () => {
       routingControlRef.current = null;
     }
     setRouteOrder([]);
+    setRouteInstructions([]);
+    setShowRouteInstructions(false);
+    setShowRouteOrderPanel(false);
     setIsRoutingActive(false);
 
     localStorage.removeItem("deliveryRouteOrder");
@@ -288,10 +300,41 @@ const MapComponent = () => {
             />
           </MapContainer>
 
-          <RouteOrderPanel
-            routeOrder={routeOrder || []} // ✅ ADD SAFETY CHECK
-            multipleMarkers={multipleMarkers}
-          />
+          {isRoutingActive && routeOrder.length > 0 && !showRouteOrderPanel && (
+            <button
+              onClick={() => setShowRouteOrderPanel((prev) => !prev)}
+              className="absolute bottom-8 left-8 bg-white border border-gray-200 px-3 py-2 rounded-lg shadow-md z-[5001] text-sm font-semibold text-gray-700 hover:bg-gray-50"
+            >
+              Show Order
+            </button>
+          )}
+
+          {showRouteOrderPanel && (
+            <RouteOrderPanel
+              routeOrder={routeOrder || []} // ✅ ADD SAFETY CHECK
+              multipleMarkers={multipleMarkers}
+              onClose={() => setShowRouteOrderPanel(false)}
+            />
+          )}
+
+          {isRoutingActive &&
+            routeInstructions.length > 0 &&
+            !showRouteInstructions && (
+            <button
+              onClick={() => setShowRouteInstructions((prev) => !prev)}
+              className="absolute top-8 right-8 bg-white border border-gray-200 px-3 py-2 rounded-lg shadow-md z-[5001] text-sm font-semibold text-gray-700 hover:bg-gray-50"
+            >
+              Show Directions
+            </button>
+          )}
+
+          {showRouteInstructions && (
+            <RouteInstructionsPanel
+              instructions={routeInstructions}
+              isRoutingActive={isRoutingActive}
+              onClose={() => setShowRouteInstructions(false)}
+            />
+          )}
         </div>
 
         <RouteSummary

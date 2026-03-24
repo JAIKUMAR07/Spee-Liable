@@ -5,6 +5,8 @@ export const useQrScanner = (onScanSuccess) => {
   const [scanning, setScanning] = useState(false);
   const regionId = "qr-code-region";
 
+  const startScanning = () => setScanning(true);
+  const stopScanning = () => setScanning(false);
   const toggleScanning = () => setScanning((prev) => !prev);
 
   useEffect(() => {
@@ -31,6 +33,8 @@ export const useQrScanner = (onScanSuccess) => {
 
   return {
     scanning,
+    startScanning,
+    stopScanning,
     toggleScanning,
     regionId,
   };

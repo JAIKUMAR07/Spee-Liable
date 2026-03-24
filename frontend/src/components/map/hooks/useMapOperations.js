@@ -10,6 +10,8 @@ export const useMapOperations = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [routeOrder, setRouteOrder] = useState([]);
+  const [routeInstructions, setRouteInstructions] = useState([]);
+  const [showRouteInstructions, setShowRouteInstructions] = useState(false);
   const [isRoutingActive, setIsRoutingActive] = useState(false);
   const [locationPermissionDenied, setLocationPermissionDenied] =
     useState(false);
@@ -238,6 +240,8 @@ export const useMapOperations = () => {
 
       // Clear route order and deactivate routing
       setRouteOrder([]);
+      setRouteInstructions([]);
+      setShowRouteInstructions(false);
       setIsRoutingActive(false);
 
       // Clear persisted data
@@ -447,9 +451,17 @@ export const useMapOperations = () => {
           const dist = (routes[0].summary.totalDistance / 1000).toFixed(1);
           const mins = Math.round(routes[0].summary.totalTime / 60);
           console.log(`✅ Route drawn: ${dist} km, ~${mins} min`);
+
+          const instructions = (routes[0].instructions || []).map((step) => ({
+            text: step.text || "Continue",
+            distance: step.distance || 0,
+          }));
+          setRouteInstructions(instructions);
         })
         .on("routingerror", (e) => {
           console.error("❌ Routing error:", e?.error);
+          setRouteInstructions([]);
+          setShowRouteInstructions(false);
         })
         .addTo(mapRef.current);
 
@@ -703,6 +715,8 @@ export const useMapOperations = () => {
   const handleReset = () => {
     setMultipleMarkers([]);
     setRouteOrder([]);
+    setRouteInstructions([]);
+    setShowRouteInstructions(false);
     setIsRoutingActive(false);
     setError(null);
     setLocationPermissionDenied(false);
@@ -734,6 +748,8 @@ export const useMapOperations = () => {
     loading,
     error,
     routeOrder,
+    routeInstructions,
+    showRouteInstructions,
     isRoutingActive,
     locationPermissionDenied,
     isGettingLocation,
@@ -745,6 +761,8 @@ export const useMapOperations = () => {
     setError,
     setMultipleMarkers,
     setRouteOrder,
+    setRouteInstructions,
+    setShowRouteInstructions,
     setSearchLocation,
     getCurrentLocation,
     refreshLocation,

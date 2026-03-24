@@ -123,7 +123,7 @@ export const createNotification = asyncHandler(async (req, res, next) => {
 // @route   DELETE /api/notifications/:id
 // @access  Private
 export const deleteNotification = asyncHandler(async (req, res, next) => {
-  const notification = await Notification.findOne({
+  const notification = await Notification.findOneAndDelete({
     _id: req.params.id,
     user: req.user.id,
   });
@@ -132,10 +132,9 @@ export const deleteNotification = asyncHandler(async (req, res, next) => {
     return next(new AppError("Notification not found", 404));
   }
 
-  await notification.deleteOne();
-
   res.status(200).json({
     success: true,
     message: "Notification deleted successfully",
+    data: { id: req.params.id },
   });
 });

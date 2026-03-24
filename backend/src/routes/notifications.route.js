@@ -21,6 +21,7 @@ router
 
 router.get("/unread-count", getUnreadCount);
 router.patch("/read-all", markAllAsRead);
+router.patch("/:id/read", markAsRead);
 router.route("/:id").patch(markAsRead).delete(deleteNotification);
 
 export default router;

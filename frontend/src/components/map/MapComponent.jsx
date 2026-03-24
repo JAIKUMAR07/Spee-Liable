@@ -3,7 +3,7 @@ import { MapContainer, TileLayer } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
 import "leaflet-routing-machine";
-import { deliveryStopsAPI, personalStopsAPI } from "../../utils/apiClient"; // ✅ Updated import
+import { deliveryStopsAPI, deliveryMarksAPI, personalStopsAPI } from "../../utils/apiClient"; // ✅ Updated import
 import { useAuth } from "../../context/AuthContext"; // ✅ Add auth hook
 
 import { useSocket } from "../../context/SocketContext"; // ADD THIS
@@ -32,6 +32,7 @@ const MapComponent = () => {
     locationPermissionDenied,
     resetLocationPermission,
     isGettingLocation,
+    isLocationTrackingActive,
     searchInputRef,
     mapRef,
     routingControlRef,
@@ -40,7 +41,6 @@ const MapComponent = () => {
     setRouteOrder,
     setSearchLocation,
     getCurrentLocation,
-    refreshLocation,
     fetchDeliveries,
     handleOptimizeRoute,
     handleReset,
@@ -50,7 +50,7 @@ const MapComponent = () => {
   const socket = useSocket(); // ADD THIS
   const [showModal, setShowModal] = React.useState(false);
   const [deleting, setDeleting] = React.useState(false);
-  const [addingMarker, setAddingMarker] = React.useState(false);
+  const [, setAddingMarker] = React.useState(false);
 
   // ✅ REAL-TIME UPDATES: Listen for package status changes
   useEffect(() => {
@@ -86,8 +86,7 @@ const MapComponent = () => {
 
   useEffect(() => {
     fetchDeliveries();
-    getCurrentLocation();
-  }, []);
+  }, [fetchDeliveries]);
   // ✅ Socket connection status indicator
   useEffect(() => {
     if (socket) {
@@ -120,13 +119,9 @@ const MapComponent = () => {
       setMultipleMarkers((prev) => prev.filter((marker) => marker._id !== id));
       setRouteOrder((prev) => prev.filter((markerId) => markerId !== id));
 
-      // ✅ TRIGGER AUTO-OPTIMIZATION after deleting marker
+      // Keep route state updated without timer-based re-optimization.
       if (isRoutingActive) {
-        console.log("🔄 Triggering auto-optimization after deleting marker");
-        // Use setTimeout to ensure state updates complete first
-        setTimeout(() => {
-          handleOptimizeRoute(); // Use the existing optimize function
-        }, 500);
+        console.log("Route remains active after stop removal.");
       }
 
       alert(`"${name}" marked as arrived and removed successfully!`);
@@ -224,8 +219,8 @@ const MapComponent = () => {
 
     try {
       setDeleting(true);
-      // ✅ Using API client - Note: You'll need to add this to your apiClient
-      await deliveryStopsAPI.deleteAll(); // This should call /api/delivery-marks
+      // ✅ Using API client
+      await deliveryMarksAPI.deleteAll();
 
       setMultipleMarkers([]);
       setRouteOrder([]);
@@ -303,6 +298,7 @@ const MapComponent = () => {
           onClearRoute={handleClearRoute}
           isRoutingActive={isRoutingActive}
           isGettingLocation={isGettingLocation}
+          isLocationTrackingActive={isLocationTrackingActive}
           canAddMarker={can("manage_deliveries")} // ✅ Pass permissions
           canOptimizeRoute={can("optimize_routes")}
         />

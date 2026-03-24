@@ -13,6 +13,7 @@ const MapControls = ({
   onClearRoute,
   isRoutingActive,
   isGettingLocation,
+  isLocationTrackingActive,
   canAddMarker = true, // ✅ New prop for permissions
   canOptimizeRoute = true, // ✅ New prop for permissions
 }) => {
@@ -68,6 +69,8 @@ const MapControls = ({
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
               Getting Location...
             </>
+          ) : isLocationTrackingActive ? (
+            "📍 Stop Location"
           ) : (
             "📍 My Location"
           )}

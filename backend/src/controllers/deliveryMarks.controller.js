@@ -1,9 +1,10 @@
 import DeliveryStop from "../models/deliveryStops.model.js";
 import asyncHandler from "../middleware/asyncHandler.js";
+import AppError from "../utils/AppError.js";
 
 // @desc    Delete all delivery stops
 // @route   DELETE /api/delivery-marks
-// @access  Public
+// @access  Private/Admin
 export const deleteAllDeliveryStops = asyncHandler(async (req, res, next) => {
   const result = await DeliveryStop.deleteMany({});
 
@@ -16,7 +17,7 @@ export const deleteAllDeliveryStops = asyncHandler(async (req, res, next) => {
 
 // @desc    Delete a delivery stop
 // @route   DELETE /api/delivery-stops/:id
-// @access  Public
+// @access  Private/Admin
 export const deleteDeliveryStop = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
 

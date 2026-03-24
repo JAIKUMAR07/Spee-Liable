@@ -120,7 +120,7 @@ export const AuthProvider = ({ children }) => {
     if (!user) return false;
 
     const permissions = {
-      admin: ["view_users", "manage_users", "view_all_deliveries"],
+      admin: ["view_users", "manage_users", "view_all_deliveries", "delete_records"],
       driver: [
         "view_deliveries",
         "manage_deliveries",

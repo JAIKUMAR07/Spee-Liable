@@ -30,7 +30,7 @@ router
 // ✅ ADD THIS ROUTE FOR PACKAGE AVAILABILITY UPDATES
 router.route("/:id/availability").patch(updatePackageAvailability);
 
-// ✅ New route for admin/manager to see all stops
+// ✅ New route for admin to see all stops
 router.route("/all").get(authorize("admin"), getAllDeliveryStops);
 
 // ✅ New route for user stats

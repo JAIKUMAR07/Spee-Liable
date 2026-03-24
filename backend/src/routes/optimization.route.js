@@ -29,7 +29,7 @@ const calculateTotalDistance = (userLocation, markers, route) => {
   if (route.length > 0) {
     totalDistance += calculateDistance(
       userLocation,
-      markers[route[0]].position
+      markers[route[0]].position,
     );
   }
 
@@ -37,7 +37,7 @@ const calculateTotalDistance = (userLocation, markers, route) => {
   for (let i = 0; i < route.length - 1; i++) {
     totalDistance += calculateDistance(
       markers[route[i]].position,
-      markers[route[i + 1]].position
+      markers[route[i + 1]].position,
     );
   }
 
@@ -74,7 +74,7 @@ const optimizeRouteNearestNeighbor = (userLocation, markers) => {
       if (!visited.has(i)) {
         const distance = calculateDistance(
           currentPosition,
-          markers[i].position
+          markers[i].position,
         );
         if (distance < minDistance) {
           minDistance = distance;
@@ -138,7 +138,7 @@ const optimizeRoute2Opt = (userLocation, markers) => {
   }
 
   console.log(
-    `Optimizing route with ${availableMarkers.length} available markers`
+    `Optimizing route with ${availableMarkers.length} available markers`,
   );
 
   // Step 1: Get initial route using available markers only
@@ -146,7 +146,7 @@ const optimizeRoute2Opt = (userLocation, markers) => {
   let bestDistance = calculateTotalDistance(
     userLocation,
     availableMarkers,
-    bestRoute
+    bestRoute,
   );
   let improved = true;
 
@@ -164,7 +164,7 @@ const optimizeRoute2Opt = (userLocation, markers) => {
         const newDistance = calculateTotalDistance(
           userLocation,
           availableMarkers,
-          newRoute
+          newRoute,
         );
 
         if (newDistance < bestDistance) {

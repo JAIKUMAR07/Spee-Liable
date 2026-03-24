@@ -7,9 +7,9 @@ import {
 import { protect, authorize } from "../middleware/auth.js";
 
 const router = express.Router();
-// All routes protected - only admin can delete all
+// All routes protected and admin-only
 router.use(protect);
-router.route("/").delete(deleteAllDeliveryStops);
-router.route("/:id").delete(deleteDeliveryStop);
+router.route("/").delete(authorize("admin"), deleteAllDeliveryStops);
+router.route("/:id").delete(authorize("admin"), deleteDeliveryStop);
 
 export default router;

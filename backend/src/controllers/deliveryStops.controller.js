@@ -36,12 +36,12 @@ export const getDeliveryStops = asyncHandler(async (req, res, next) => {
   });
 });
 
-// @desc    Get all delivery stops (Admin/Manager only - for overview)
+// @desc    Get all delivery stops (Admin only - for overview)
 // @route   GET /api/delivery-stops/all
-// @access  Private (Admin/Manager)
+// @access  Private (Admin)
 export const getAllDeliveryStops = asyncHandler(async (req, res, next) => {
-  // ✅ Only admin and manager can see all stops
-  if (req.user.role !== "admin" && req.user.role !== "manager") {
+  // ✅ Only admin can see all stops
+  if (req.user.role !== "admin") {
     return next(new AppError("Not authorized to view all delivery stops", 403));
   }
 
@@ -133,11 +133,10 @@ export const updateDeliveryStopAvailability = asyncHandler(
       return next(new AppError("Delivery stop not found", 404));
     }
 
-    // ✅ Check if user owns this stop or is admin/manager
+    // ✅ Check if user owns this stop or is admin
     if (
       stop.assignedTo.toString() !== req.user.id &&
-      req.user.role !== "admin" &&
-      req.user.role !== "manager"
+      req.user.role !== "admin"
     ) {
       return next(
         new AppError("Not authorized to update this delivery stop", 403)
@@ -165,11 +164,10 @@ export const deleteDeliveryStop = asyncHandler(async (req, res, next) => {
     return next(new AppError("Delivery stop not found", 404));
   }
 
-  // ✅ UPDATED: Allow drivers to delete their own stops
+  // ✅ Admin can delete any stop, drivers can delete only assigned stops
   const canDelete =
-    // Admin/manager can delete anything
+    // Admin can delete anything
     req.user.role === "admin" ||
-    req.user.role === "driver" ||
     // Driver can delete stops assigned to them
     stop.assignedTo.toString() === req.user.id;
 

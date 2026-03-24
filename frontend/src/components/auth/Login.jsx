@@ -14,7 +14,7 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const from = "/";
+  const from = location.state?.from?.pathname || "/";
 
   const handleChange = (e) => {
     setFormData({
@@ -37,8 +37,6 @@ const Login = () => {
 
     setLoading(true);
     setError("");
-
-    const result = await login(formData.email, formData.password);
 
     try {
       console.log("🚀 Calling login function...");

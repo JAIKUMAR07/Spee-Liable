@@ -80,7 +80,7 @@ export const updateUserRole = asyncHandler(async (req, res, next) => {
 
   if (
     !role ||
-    !["admin", "manager", "driver", "viewer", "customer"].includes(role)
+    !["admin", "driver", "customer"].includes(role)
   ) {
     return next(new AppError("Please provide a valid role", 400));
   }

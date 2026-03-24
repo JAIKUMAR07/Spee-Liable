@@ -14,6 +14,8 @@ export const useMapOperations = () => {
   const [locationPermissionDenied, setLocationPermissionDenied] =
     useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [isLocationTrackingActive, setIsLocationTrackingActive] = useState(false);
+  const [deliveriesLoaded, setDeliveriesLoaded] = useState(false);
 
   const searchInputRef = useRef(null);
   const mapRef = useRef(null);
@@ -97,6 +99,7 @@ export const useMapOperations = () => {
   const fetchDeliveries = useCallback(async () => {
     try {
       setLoading(true);
+      setDeliveriesLoaded(false);
       const [response, personalResponse] = await Promise.all([
         deliveryStopsAPI.getAll(),
         personalStopsAPI.getAll().catch((err) => {
@@ -170,7 +173,7 @@ export const useMapOperations = () => {
       ) {
         personalData = personalData.data;
       } else if (Array.isArray(personalData)) {
-        personalData = personalData;
+        // Keep array response as-is
       } else {
         personalData = [];
       }
@@ -218,13 +221,13 @@ export const useMapOperations = () => {
       setError(errorMessage);
     } finally {
       setLoading(false);
+      setDeliveriesLoaded(true);
     }
   }, []); // ✅ Empty dependency array since we're not using any external variables
 
-  // ✅ NEW: Auto-clear route when no markers are available
+  // Only clear route when data is fully loaded and no markers truly remain.
   useEffect(() => {
-    // If route is active but no available markers, clear the route
-    if (isRoutingActive && multipleMarkers.length === 0) {
+    if (deliveriesLoaded && isRoutingActive && multipleMarkers.length === 0) {
       console.log("🔄 No available markers - clearing route");
 
       // Clear the route from map
@@ -244,31 +247,11 @@ export const useMapOperations = () => {
       console.log("✅ Route cleared - no markers available");
     }
   }, [
+    deliveriesLoaded,
     multipleMarkers.length,
     isRoutingActive,
     setRouteOrder,
     setIsRoutingActive,
-  ]);
-  // ✅ NEW: Auto-optimize when markers change significantly
-  useEffect(() => {
-    // Only auto-optimize if we have a route active and markers changed
-    if (isRoutingActive && multipleMarkers.length > 0 && userLocation) {
-      console.log(
-        `🔄 Markers changed: ${multipleMarkers.length} markers, triggering auto-optimization`,
-      );
-
-      // Use a small delay to avoid too many rapid optimizations
-      const optimizationTimer = setTimeout(() => {
-        handleAutoOptimizeRoute();
-      }); // 1 second delay
-
-      return () => clearTimeout(optimizationTimer);
-    }
-  }, [
-    multipleMarkers.length,
-    isRoutingActive,
-    userLocation,
-    handleAutoOptimizeRoute,
   ]);
 
   // ✅ UPDATED: Real-time updates with auto-optimization
@@ -295,49 +278,12 @@ export const useMapOperations = () => {
           `🗑️ Removed package ${data.packageId} from map (unavailable)`,
         );
 
-        // ✅ CHECK IF NO MARKERS LEFT - CLEAR ROUTE
-        setTimeout(() => {
-          const updatedMarkers = multipleMarkers.filter(
-            (marker) => marker._id !== data.packageId,
-          );
-          if (updatedMarkers.length === 0 && isRoutingActive) {
-            console.log("🔄 All markers removed - clearing route");
-
-            // Clear the route from map
-            if (routingControlRef.current) {
-              mapRef.current?.removeControl(routingControlRef.current);
-              routingControlRef.current = null;
-            }
-
-            setRouteOrder([]);
-            setIsRoutingActive(false);
-
-            // Clear persisted data
-            localStorage.removeItem("deliveryRouteOrder");
-            localStorage.removeItem("deliveryIsRoutingActive");
-          }
-          // ✅ TRIGGER AUTO-OPTIMIZATION when marker is removed (if markers still exist)
-          else if (isRoutingActive && updatedMarkers.length > 0) {
-            console.log(
-              "🔄 Triggering auto-optimization due to marker removal",
-            );
-            handleAutoOptimizeRoute();
-          }
-        }, 100);
       } else if (data.status === "available") {
         // Add or update marker if available - fetch fresh data
         console.log(
           `🔄 Package ${data.packageId} now available - refreshing data`,
         );
-        fetchDeliveries().then(() => {
-          // ✅ TRIGGER AUTO-OPTIMIZATION after fetching new data
-          if (isRoutingActive) {
-            console.log(
-              "🔄 Triggering auto-optimization due to marker addition",
-            );
-            setTimeout(() => handleAutoOptimizeRoute(), 1000);
-          }
-        });
+        fetchDeliveries();
       }
     };
 
@@ -355,8 +301,6 @@ export const useMapOperations = () => {
     setRouteOrder,
     fetchDeliveries,
     isRoutingActive,
-    handleAutoOptimizeRoute,
-    multipleMarkers,
   ]);
   // Load persisted state on component mount
   useEffect(() => {
@@ -364,12 +308,29 @@ export const useMapOperations = () => {
     const persistedIsRoutingActive = localStorage.getItem(
       "deliveryIsRoutingActive",
     );
+    const persistedUserLocation = localStorage.getItem("deliveryUserLocation");
+    const persistedLocationTracking = localStorage.getItem(
+      "deliveryLocationTrackingActive",
+    );
 
     if (persistedRouteOrder) {
       setRouteOrder(JSON.parse(persistedRouteOrder));
     }
     if (persistedIsRoutingActive) {
       setIsRoutingActive(JSON.parse(persistedIsRoutingActive));
+    }
+    if (persistedUserLocation) {
+      try {
+        const parsedLocation = JSON.parse(persistedUserLocation);
+        if (Array.isArray(parsedLocation) && parsedLocation.length === 2) {
+          setUserLocation(parsedLocation);
+        }
+      } catch {
+        localStorage.removeItem("deliveryUserLocation");
+      }
+    }
+    if (persistedLocationTracking) {
+      setIsLocationTrackingActive(JSON.parse(persistedLocationTracking));
     }
   }, []);
 
@@ -383,6 +344,19 @@ export const useMapOperations = () => {
       );
     }
   }, [routeOrder, isRoutingActive]);
+
+  useEffect(() => {
+    if (userLocation && Array.isArray(userLocation)) {
+      localStorage.setItem("deliveryUserLocation", JSON.stringify(userLocation));
+    }
+  }, [userLocation]);
+
+  useEffect(() => {
+    localStorage.setItem(
+      "deliveryLocationTrackingActive",
+      JSON.stringify(isLocationTrackingActive),
+    );
+  }, [isLocationTrackingActive]);
 
   // Cleanup watch position on unmount
   useEffect(() => {
@@ -413,66 +387,100 @@ export const useMapOperations = () => {
     }
   };
 
-  // Recreate route when markers and routeOrder are both available
-  useEffect(() => {
-    if (
-      routeOrder.length > 0 &&
-      multipleMarkers.length > 0 &&
-      mapRef.current &&
-      userLocation
-    ) {
-      recreateRoute();
-    }
-  }, [routeOrder, multipleMarkers, userLocation]);
 
-  const recreateRoute = () => {
-    if (routingControlRef.current) {
-      mapRef.current?.removeControl(routingControlRef.current);
-      routingControlRef.current = null;
-    }
-
-    const orderedMarkers = routeOrder
-      .map((id) => multipleMarkers.find((marker) => marker._id === id))
-      .filter((marker) => marker !== undefined);
-
-    if (orderedMarkers.length === 0 || !userLocation) {
-      console.log(
-        "No valid markers found for persisted route or no user location",
-      );
+  // ✅ SINGLE source of truth for drawing a route on the map
+  const drawRoute = (order, markers, location) => {
+    if (!mapRef.current) {
+      console.warn("⚠️ drawRoute: mapRef not ready");
       return;
     }
 
+    // Always clear previous route first
+    if (routingControlRef.current) {
+      try {
+        // Force-clear waypoints first so repeated optimize clicks always redraw
+        routingControlRef.current.setWaypoints([]);
+      } catch (e) {
+        console.warn("Could not clear previous waypoints", e);
+      }
+      try {
+        mapRef.current.removeControl(routingControlRef.current);
+      } catch (e) {
+        console.warn("Could not remove old routing control", e);
+      }
+      routingControlRef.current = null;
+    }
+
+    if (!order || order.length === 0 || !location) {
+      console.log("drawRoute: nothing to draw");
+      return;
+    }
+
+    const orderedMarkers = order
+      .map((id) => markers.find((m) => m._id === id))
+      .filter(Boolean);
+
+    if (orderedMarkers.length === 0) return;
+
     const waypoints = [
-      L.latLng(...userLocation),
+      L.latLng(...location),
       ...orderedMarkers.map((m) => L.latLng(...m.position)),
     ];
 
-    routingControlRef.current = L.Routing.control({
-      waypoints,
-      routeWhileDragging: true,
-      show: false,
-      lineOptions: { styles: [{ color: "#0066ff", opacity: 0.7, weight: 5 }] },
-      createMarker: () => null,
-    })
-      .on("routesfound", (e) => {
-        const routes = e.routes;
-        if (routes.length === 0) return;
+    console.log(`🗺️ Drawing route with ${waypoints.length} waypoints`);
 
-        const totalDistance = (routes[0].summary.totalDistance / 1000).toFixed(
-          1,
-        );
-        const totalTime = Math.round(routes[0].summary.totalTime / 60);
-
-        console.log(
-          `Route recreated! Total: ${totalDistance} km, ~${totalTime} min`,
-        );
+    try {
+      routingControlRef.current = L.Routing.control({
+        waypoints,
+        routeWhileDragging: false,
+        show: false,
+        addWaypoints: false,
+        fitSelectedRoutes: false,
+        lineOptions: {
+          styles: [{ color: "#4f46e5", opacity: 0.85, weight: 6 }],
+        },
+        createMarker: () => null,
       })
-      .addTo(mapRef.current);
+        .on("routesfound", (e) => {
+          const routes = e.routes;
+          if (!routes || routes.length === 0) return;
+          const dist = (routes[0].summary.totalDistance / 1000).toFixed(1);
+          const mins = Math.round(routes[0].summary.totalTime / 60);
+          console.log(`✅ Route drawn: ${dist} km, ~${mins} min`);
+        })
+        .on("routingerror", (e) => {
+          console.error("❌ Routing error:", e?.error);
+        })
+        .addTo(mapRef.current);
 
-    setIsRoutingActive(true);
+      setIsRoutingActive(true);
+    } catch (err) {
+      console.error("drawRoute crashed:", err);
+    }
   };
 
-  const getCurrentLocation = () => {
+  // Keep route visible and re-draw it after navigation/page return.
+  useEffect(() => {
+    if (!deliveriesLoaded || !isRoutingActive) return;
+    if (!routeOrder || routeOrder.length === 0) return;
+    if (!userLocation || !mapRef.current) return;
+
+    const validOrder = routeOrder.filter((id) =>
+      multipleMarkers.some((m) => m._id === id)
+    );
+
+    if (validOrder.length === 0) return;
+
+    drawRoute(validOrder, multipleMarkers, userLocation);
+  }, [
+    deliveriesLoaded,
+    isRoutingActive,
+    routeOrder,
+    multipleMarkers,
+    userLocation,
+  ]);
+
+  const startLocationTracking = () => {
     if (!navigator.geolocation) {
       setError("Geolocation is not supported by your browser.");
       return;
@@ -501,6 +509,7 @@ export const useMapOperations = () => {
         setUserLocation([latitude, longitude]);
         setLocationPermissionDenied(false);
         setIsGettingLocation(false);
+        setIsLocationTrackingActive(true);
         startContinuousTracking();
       },
       (err) => {
@@ -536,6 +545,25 @@ export const useMapOperations = () => {
         maximumAge: 60000,
       },
     );
+  };
+
+  const stopLocationTracking = () => {
+    if (watchIdRef.current) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+    setIsLocationTrackingActive(false);
+    setIsGettingLocation(false);
+    console.log("Stopped live location tracking");
+  };
+
+  const getCurrentLocation = () => {
+    // Toggle behavior: click again to stop tracking.
+    if (isLocationTrackingActive) {
+      stopLocationTracking();
+      return;
+    }
+    startLocationTracking();
   };
 
   const getCurrentLocationFallback = () => {
@@ -592,7 +620,7 @@ export const useMapOperations = () => {
     setLocationPermissionDenied(false);
     setError(null);
     setUserLocation(null);
-    setTimeout(() => getCurrentLocation(), 500);
+    setTimeout(() => startLocationTracking(), 500);
   };
 
   const refreshLocation = () => {
@@ -600,15 +628,13 @@ export const useMapOperations = () => {
     if (watchIdRef.current) {
       navigator.geolocation.clearWatch(watchIdRef.current);
     }
-    getCurrentLocation();
+    startLocationTracking();
   };
 
   const refreshDeliveries = async () => {
     await fetchDeliveries();
   };
 
-  // ✅ UPDATED: Use API client for optimization
-  // ✅ UPDATED: Use API client for optimization with better error handling
   const handleOptimizeRoute = async () => {
     if (!userLocation || multipleMarkers.length === 0) {
       setError(
@@ -617,67 +643,60 @@ export const useMapOperations = () => {
       return;
     }
 
+    if (!mapRef.current) {
+      setError("Map is not ready yet. Please wait a moment.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
-      console.log("🔍 Sending to backend optimization:");
-      console.log("User Location:", userLocation);
-      console.log("Markers count:", multipleMarkers.length);
+      // Always force a fresh redraw before rebuilding route.
+      if (routingControlRef.current && mapRef.current) {
+        try {
+          routingControlRef.current.setWaypoints([]);
+        } catch (e) {
+          console.warn("Could not clear waypoints before optimize", e);
+        }
+        try {
+          mapRef.current.removeControl(routingControlRef.current);
+        } catch (e) {
+          console.warn("Could not remove existing route before optimize", e);
+        }
+        routingControlRef.current = null;
+      }
 
-      // ✅ Using API client instead of direct fetch
       const response = await optimizationAPI.optimizeRoute({
-        userLocation: userLocation,
+        userLocation,
         markers: multipleMarkers,
       });
 
       const data = response.data;
-      console.log("📥 Backend response:", data);
 
-      if (!data || !data.success) {
-        throw new Error(
-          data?.error || "Optimization failed - no data returned",
-        );
+      if (!data?.success || !Array.isArray(data?.data?.optimizedOrder)) {
+        throw new Error(data?.error || "Invalid optimization result");
       }
 
-      // ✅ ADD SAFETY CHECK for optimizedOrder
-      if (
-        !data.data ||
-        !data.data.optimizedOrder ||
-        !Array.isArray(data.data.optimizedOrder)
-      ) {
-        console.warn("⚠️ Backend returned invalid optimizedOrder:", data.data);
-        throw new Error("Invalid optimization result from server");
-      }
+      const newOrder = data.data.optimizedOrder;
+      setRouteOrder(newOrder);
 
-      // Clear existing route
-      if (routingControlRef.current) {
-        mapRef.current?.removeControl(routingControlRef.current);
-        routingControlRef.current = null;
-      }
+      // ✅ Draw using the single centralized function
+      drawRoute(newOrder, multipleMarkers, userLocation);
 
-      // Set the optimized route order from backend
-      setRouteOrder(data.data.optimizedOrder);
-      setIsRoutingActive(true);
-
-      console.log(
-        `✅ Route optimized via backend! ${
-          data.data.optimizedOrder.length
-        } stops, ${data.data.totalDistance || "N/A"} km`,
-      );
-      console.log("Optimized order:", data.data.optimizedOrder);
+      console.log(`✅ Route optimized: ${newOrder.length} stops`);
     } catch (error) {
       const errorMessage =
         error.response?.data?.error ||
         error.message ||
         "Failed to optimize route";
-      console.error("Backend optimization error:", error);
+      console.error("Optimization error:", error);
       setError(`Failed to optimize route: ${errorMessage}`);
 
-      // ✅ FALLBACK: Use simple order if optimization fails
-      const fallbackOrder = multipleMarkers.map((marker) => marker._id);
+      // Fallback: Use simple unoptimized order
+      const fallbackOrder = multipleMarkers.map((m) => m._id);
       setRouteOrder(fallbackOrder);
-      console.log("🔄 Using fallback route order:", fallbackOrder);
+      drawRoute(fallbackOrder, multipleMarkers, userLocation);
     } finally {
       setLoading(false);
     }
@@ -689,10 +708,13 @@ export const useMapOperations = () => {
     setIsRoutingActive(false);
     setError(null);
     setLocationPermissionDenied(false);
+    stopLocationTracking();
 
     // Clear persisted data
     localStorage.removeItem("deliveryRouteOrder");
     localStorage.removeItem("deliveryIsRoutingActive");
+    localStorage.removeItem("deliveryUserLocation");
+    localStorage.removeItem("deliveryLocationTrackingActive");
 
     if (routingControlRef.current) {
       mapRef.current?.removeControl(routingControlRef.current);
@@ -717,6 +739,7 @@ export const useMapOperations = () => {
     isRoutingActive,
     locationPermissionDenied,
     isGettingLocation,
+    isLocationTrackingActive,
     setIsRoutingActive,
     searchInputRef,
     mapRef,

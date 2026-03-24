@@ -464,6 +464,8 @@ export const useMapOperations = () => {
     if (!deliveriesLoaded || !isRoutingActive) return;
     if (!routeOrder || routeOrder.length === 0) return;
     if (!userLocation || !mapRef.current) return;
+    // Prevent redraw on every live-location update.
+    if (routingControlRef.current) return;
 
     const validOrder = routeOrder.filter((id) =>
       multipleMarkers.some((m) => m._id === id)
@@ -558,11 +560,7 @@ export const useMapOperations = () => {
   };
 
   const getCurrentLocation = () => {
-    // Toggle behavior: click again to stop tracking.
-    if (isLocationTrackingActive) {
-      stopLocationTracking();
-      return;
-    }
+    // Always start/refresh live location when button is clicked.
     startLocationTracking();
   };
 

@@ -1,7 +1,7 @@
 # 🚀 SpeeLiable — Smart Delivery Logistics
 
 <p align="center">
-  <img src="frontend/public/speeliable_logo.png" width="250" alt="SpeeLiable Logo">
+  <img src="frontend/public/speeliable_logo2.png" width="250" alt="SpeeLiable Logo">
 </p>
 
 **SpeeLiable** is a comprehensive MERN-stack logistics solution designed to empower delivery workforces. By combining **real-time route optimization**, **QR-based package scanning**, and **live customer interaction**, SpeeLiable automates the manual planning process and enhances the overall delivery experience for drivers and customers alike.
@@ -30,6 +30,12 @@
 - **Unified User Management**: Control and monitor all users (Drivers, Customers, Managers) from a single interface.
 - **Role-Based Access Control (RBAC)**: Fine-grained permissions for scanning, optimization, and system administration.
 - **System Insights**: Comprehensive overview of delivery statistics and operational health.
+
+---
+
+## SpeeLiable System
+
+![alt text](image-2.png)
 
 ---
 

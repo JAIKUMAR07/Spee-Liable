@@ -49,3 +49,4 @@ env
 # Misc
 .DS_Store
 Thumbs.db
+seed.js

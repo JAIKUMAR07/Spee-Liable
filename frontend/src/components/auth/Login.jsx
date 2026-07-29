@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { getPostAuthRoute } from "../../utils/authRedirect";
 
@@ -7,6 +8,7 @@ const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -96,18 +98,27 @@ const Login = () => {
             <label htmlFor="password" className="mb-1 block text-sm font-semibold text-slate-700">
               Password
             </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={formData.password}
-              onChange={handleChange}
-              className="block w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-              placeholder="Enter your password"
-              disabled={loading}
-            />
+            <div className="relative">
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                required
+                value={formData.password}
+                onChange={handleChange}
+                className="block w-full rounded-lg border border-slate-300 px-3 py-2.5 pr-10 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                placeholder="Enter your password"
+                disabled={loading}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           <button
@@ -126,24 +137,27 @@ const Login = () => {
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <button
               onClick={() => fillDemoAccount("admin@gmail.com", "admin123")}
-              className="rounded-lg border border-violet-200 bg-violet-50 p-2 text-left text-xs"
+              className="rounded-lg border border-violet-200 bg-violet-50 p-2 text-left text-xs transition hover:bg-violet-100"
             >
               <p className="font-bold text-violet-800">Admin</p>
-              <p className="text-violet-700">admin@gmail.com</p>
+              <p className="text-violet-700">Email: admin@gmail.com</p>
+              <p className="text-violet-700">Pass: admin123</p>
             </button>
             <button
               onClick={() => fillDemoAccount("driver@gmail.com", "driver123")}
-              className="rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-left text-xs"
+              className="rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-left text-xs transition hover:bg-emerald-100"
             >
               <p className="font-bold text-emerald-800">Driver</p>
-              <p className="text-emerald-700">driver@gmail.com</p>
+              <p className="text-emerald-700">Email: driver@gmail.com</p>
+              <p className="text-emerald-700">Pass: driver123</p>
             </button>
             <button
               onClick={() => fillDemoAccount("customer@gmail.com", "customer123")}
-              className="rounded-lg border border-sky-200 bg-sky-50 p-2 text-left text-xs sm:col-span-2"
+              className="rounded-lg border border-sky-200 bg-sky-50 p-2 text-left text-xs sm:col-span-2 transition hover:bg-sky-100"
             >
               <p className="font-bold text-sky-800">Customer</p>
-              <p className="text-sky-700">customer@gmail.com</p>
+              <p className="text-sky-700">Email: customer@gmail.com</p>
+              <p className="text-sky-700">Pass: customer123</p>
             </button>
           </div>
         </div>

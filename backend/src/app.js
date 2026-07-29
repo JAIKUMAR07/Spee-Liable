@@ -54,6 +54,12 @@ app.use("/api/delivery-marks", deliveryMarksMapRouter);
 app.use("/api/optimization", optimizationRouter); // ADD THIS LINE
 app.use("/api/personal-stops", personalStopsRouter); // ADD PERSONAL STOPS ROUTE
 // Basic route to test if server is running
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok", message: "Server is healthy" });
+});
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ status: "ok", message: "Server is healthy" });
+});
 app.use("/api/notifications", notificationRouter); // ADD THIS
 app.get("/", (req, res) => {
   res.send("Hello from Delivery App Backend!");

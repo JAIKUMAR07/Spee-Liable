@@ -3,6 +3,12 @@ import axios from "axios";
 const apiBase = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const API_BASE_URL = apiBase.replace(/\/$/, "") + "/api";
 
+let networkErrorCallback = null;
+
+export const setOnNetworkError = (callback) => {
+  networkErrorCallback = callback;
+};
+
 // Create axios instance with base config
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -30,6 +36,13 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
+    const isNetworkErr =
+      !error.response || [502, 503, 504].includes(error.response?.status);
+
+    if (isNetworkErr && networkErrorCallback) {
+      networkErrorCallback();
+    }
+
     if (error.response?.status === 401) {
       // Token expired or invalid
       localStorage.removeItem("token");
@@ -54,6 +67,10 @@ apiClient.interceptors.response.use(
 
 // Auth API
 export const authAPI = {
+  ping: () =>
+    axios
+      .get(`${apiBase.replace(/\/$/, "")}/api/health`, { timeout: 4000 })
+      .catch(() => axios.get(apiBase, { timeout: 4000 })),
   login: (credentials) => apiClient.post("/auth/login", credentials),
   register: (userData) => apiClient.post("/auth/register", userData),
   getMe: () => apiClient.get("/auth/me"),

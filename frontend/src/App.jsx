@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthProvider";
 import { SocketProvider } from "./context/SocketContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import ServerConnectingOverlay from "./components/layout/ServerConnectingOverlay";
 
 import HomePage from "./components/homePage/HomePage";
 import QrScanner from "./components/qr_scanner/QrScanner";
@@ -18,6 +19,7 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <ServerConnectingOverlay />
         <SocketProvider>
           {" "}
           {/* ✅ MOVE SocketProvider INSIDE AuthProvider */}

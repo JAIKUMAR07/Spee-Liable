@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { AuthContext } from "./AuthContext";
-import { authAPI } from "../utils/apiClient";
+import { authAPI, setOnNetworkError } from "../utils/apiClient";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isWakingUp, setIsWakingUp] = useState(true); // Start as true to block UI initially
   const [token, setToken] = useState(localStorage.getItem("token"));
 
   // Add this function to update user data
@@ -15,7 +16,72 @@ export const AuthProvider = ({ children }) => {
     }));
   };
 
-  // Check if user is authenticated on app start
+  // Helper to check server health
+  const checkServerConnection = useCallback(async () => {
+    try {
+      await authAPI.ping();
+      setIsWakingUp(false);
+      return true;
+    } catch (error) {
+      const isUnreachable =
+        !error.response ||
+        [502, 503, 504].includes(error.response?.status);
+
+      if (isUnreachable) {
+        setIsWakingUp(true);
+      } else {
+        setIsWakingUp(false);
+      }
+      return !isUnreachable;
+    }
+  }, []);
+
+  // Listen for network errors from apiClient
+  useEffect(() => {
+    setOnNetworkError(() => {
+      setIsWakingUp(true);
+    });
+  }, []);
+
+  // Continuously check server connection
+  useEffect(() => {
+    let timeoutId;
+    let isMounted = true;
+
+    const runPing = async () => {
+      try {
+        await authAPI.ping();
+        if (isMounted) {
+          setIsWakingUp(false);
+        }
+      } catch (error) {
+        if (!isMounted) return;
+        const isUnreachable =
+          !error.response ||
+          [502, 503, 504].includes(error.response?.status);
+
+        if (isUnreachable) {
+          setIsWakingUp(true);
+        } else {
+          setIsWakingUp(false);
+        }
+      } finally {
+        if (isMounted) {
+          // Re-ping faster (2s) if disconnected/waking up, slower (10s) as heartbeat if connected
+          const delay = isWakingUp ? 2000 : 10000;
+          timeoutId = setTimeout(runPing, delay);
+        }
+      }
+    };
+
+    runPing();
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
+  }, [isWakingUp]);
+
   // Check if user is authenticated on app start
   useEffect(() => {
     const checkAuth = async () => {
@@ -23,6 +89,7 @@ export const AuthProvider = ({ children }) => {
       if (storedToken) {
         try {
           const response = await authAPI.getMe();
+          setIsWakingUp(false);
           const userData = response.data.user;
 
           // Normalize the user object to have both id and _id
@@ -33,19 +100,33 @@ export const AuthProvider = ({ children }) => {
           setToken(storedToken);
         } catch (error) {
           console.error("Auth check failed:", error);
-          logout();
+          const isNetworkError =
+            !error.response ||
+            [502, 503, 504].includes(error.response?.status);
+
+          if (isNetworkError) {
+            setIsWakingUp(true);
+          } else {
+            setIsWakingUp(false);
+            logout();
+          }
         }
+      } else {
+        // If no token, test connection once
+        checkServerConnection();
       }
       setLoading(false);
     };
 
     checkAuth();
-  }, []);
+  }, [checkServerConnection]);
+
   // Login function
   const login = async (email, password) => {
     try {
       console.log("🔐 Attempting login with:", email);
       const response = await authAPI.login({ email, password });
+      setIsWakingUp(false);
       console.log("📨 Login API response:", response);
 
       const { user: userData, token } = response.data;
@@ -63,8 +144,19 @@ export const AuthProvider = ({ children }) => {
       return { success: true, user: normalizedUser };
     } catch (error) {
       console.log("🚨 Login API error:", error);
-      console.log("📊 Error response:", error.response);
+      const isNetworkError =
+        !error.response ||
+        [502, 503, 504].includes(error.response?.status);
 
+      if (isNetworkError) {
+        setIsWakingUp(true);
+        return {
+          success: false,
+          error: "Backend server is not connected. Please start the server.",
+        };
+      }
+
+      setIsWakingUp(false);
       return {
         success: false,
         error: error.response?.data?.error || "Login failed - check console",
@@ -80,11 +172,12 @@ export const AuthProvider = ({ children }) => {
       _id: userData._id || userData.id, // Ensure '_id' field exists
     };
   };
-  // Register function
+
   // Register function
   const register = async (userData) => {
     try {
       const response = await authAPI.register(userData);
+      setIsWakingUp(false);
       const { user: responseUser, token } = response.data;
 
       // Normalize the user object
@@ -96,6 +189,19 @@ export const AuthProvider = ({ children }) => {
 
       return { success: true, user: normalizedUser };
     } catch (error) {
+      const isNetworkError =
+        !error.response ||
+        [502, 503, 504].includes(error.response?.status);
+
+      if (isNetworkError) {
+        setIsWakingUp(true);
+        return {
+          success: false,
+          error: "Backend server is not connected. Please start the server.",
+        };
+      }
+
+      setIsWakingUp(false);
       return {
         success: false,
         error: error.response?.data?.error || "Registration failed",
@@ -157,10 +263,13 @@ export const AuthProvider = ({ children }) => {
 
     return false;
   };
+
   const value = {
     user,
     token,
     loading,
+    isWakingUp,
+    checkServerConnection,
     login,
     register,
     logout,
